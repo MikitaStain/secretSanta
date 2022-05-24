@@ -1,0 +1,35 @@
+spring:
+
+#  liquibase:
+#    enabled: true
+#    change-log: classpath:/db/changelog/db.changelog-root.xml
+
+
+  jpa:
+    open-in-view: true
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+
+  application:
+    name: secret_santa
+
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/secret_santa
+    username: postgres
+    password: 7403663
+
+springfox:
+  documentation:
+    swagger:
+      v2:
+        use-model-v3: true
+
+
+server:
+  port: 8080
