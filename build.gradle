@@ -22,14 +22,14 @@ dependencies {
     implementation "org.postgresql:postgresql:$postgresqlVersion"
 
     compileOnly "org.projectlombok:lombok:$lombokVersion"
+    annotationProcessor "org.projectlombok:lombok:$lombokVersion"
 
     implementation "io.springfox:springfox-boot-starter:$swwagerVersion"
 
     implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.4.2.Final'
     annotationProcessor "org.mapstruct:mapstruct-processor:1.5.0.Beta1"
 
-
-
+    implementation 'org.liquibase:liquibase-core:4.11.0'
 
 }
 

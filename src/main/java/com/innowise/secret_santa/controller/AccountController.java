@@ -1,7 +1,7 @@
 package com.innowise.secret_santa.controller;
 
-import com.innowise.secret_santa.model.Account;
 import com.innowise.secret_santa.model.dto.AccountDto;
+import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.service.AccountService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -39,7 +39,7 @@ public class AccountController {
 
     @PostMapping
     @ApiOperation("save a user")
-    public ResponseEntity<HttpStatus> createAccount(@RequestBody AccountDto account) {
+    public ResponseEntity<HttpStatus> createAccount(@RequestBody RegistrationLoginAccount account) {
 
         accountService.createdAccount(account);
 

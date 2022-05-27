@@ -16,8 +16,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,7 +29,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @EqualsAndHashCode
 @Entity
-@Table
+@Table(schema = "application", name = "profiles")
 public class Profile {
 
     @Id
@@ -37,11 +39,20 @@ public class Profile {
     @Column
     private String name;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_account")
     private Account account;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JoinColumn(name = "id_address")
     private Address address;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "profile", cascade = CascadeType.REMOVE)
+    private List<Player> players;
 }

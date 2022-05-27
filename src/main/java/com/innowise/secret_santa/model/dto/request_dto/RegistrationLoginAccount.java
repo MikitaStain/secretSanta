@@ -1,4 +1,4 @@
-package com.innowise.secret_santa.model.dto;
+package com.innowise.secret_santa.model.dto.request_dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AccountDto {
+public class RegistrationLoginAccount {
 
     private String email;
 

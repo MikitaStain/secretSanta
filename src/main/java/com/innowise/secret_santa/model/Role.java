@@ -26,7 +26,7 @@ import javax.persistence.Table;
 @Builder
 @ToString
 @Entity
-@Table
+@Table(schema = "application", name = "roles")
 public class Role {
 
     @Id

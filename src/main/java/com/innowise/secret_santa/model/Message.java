@@ -17,7 +17,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString
 @Entity
-@Table
+@Table(schema = "application", name = "messages")
 public class Message {
 
     @Id
@@ -46,7 +46,9 @@ public class Message {
     @Enumerated(EnumType.STRING)
     private TypeMessage typeMessage;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_account")
     private Account account;
 }
