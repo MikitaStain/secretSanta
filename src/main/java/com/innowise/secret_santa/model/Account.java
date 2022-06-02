@@ -48,8 +48,8 @@ public class Account {
     private LocalDateTime dateCreated;
 
     @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "id_role")
     private Role role;
 

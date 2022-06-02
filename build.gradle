@@ -16,7 +16,7 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$jupiterVersion"
     implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-//    implementation "org.springframework.boot:spring-boot-starter-security:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-security:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
 
     implementation "org.postgresql:postgresql:$postgresqlVersion"
@@ -26,10 +26,13 @@ dependencies {
 
     implementation "io.springfox:springfox-boot-starter:$swwagerVersion"
 
-    implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.4.2.Final'
-    annotationProcessor "org.mapstruct:mapstruct-processor:1.5.0.Beta1"
+    implementation "org.mapstruct:mapstruct:$mapstructVersion"
+    annotationProcessor "org.mapstruct:mapstruct-processor:$mapstructVersion"
 
-    implementation 'org.liquibase:liquibase-core:4.11.0'
+    implementation "org.liquibase:liquibase-core:$liquibaseVersion"
+
+    implementation "io.jsonwebtoken:jjwt:$jsonwebtokenVersion"
+
 
 }
 

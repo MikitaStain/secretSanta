@@ -6,11 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class RoleDto {
-
-    private RoleEnum roleEnum;
+    @Enumerated(EnumType.STRING)
+    private RoleEnum roleName;
 }

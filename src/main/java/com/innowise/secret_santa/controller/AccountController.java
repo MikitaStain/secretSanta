@@ -2,7 +2,7 @@ package com.innowise.secret_santa.controller;
 
 import com.innowise.secret_santa.model.dto.AccountDto;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
-import com.innowise.secret_santa.service.AccountService;
+import com.innowise.secret_santa.service.AccountServiceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Api("Account Rest Controller")
 public class AccountController {
 
-    private final AccountService accountService;
+    private final AccountServiceImpl accountService;
 
     @Autowired
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountServiceImpl accountService) {
         this.accountService = accountService;
     }
 
@@ -32,12 +32,12 @@ public class AccountController {
     @ApiOperation("getting a account by id")
     public ResponseEntity<AccountDto> getAccount(@PathVariable("id") Long id) {
 
-        AccountDto userById = accountService.getAccountById(id);
+        AccountDto userById = accountService.getAccountDtoById(id);
 
         return new ResponseEntity<>(userById, HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("/registration")
     @ApiOperation("save a user")
     public ResponseEntity<HttpStatus> createAccount(@RequestBody RegistrationLoginAccount account) {
 

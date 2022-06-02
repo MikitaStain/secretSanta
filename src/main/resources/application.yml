@@ -33,3 +33,8 @@ springfox:
 
 server:
   port: 8080
+
+jwt:
+  token:
+    secret: secretKey
+    expired: 3600000
