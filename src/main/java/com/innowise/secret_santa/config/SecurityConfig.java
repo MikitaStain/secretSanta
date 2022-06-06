@@ -44,8 +44,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/swagger-ui/**",
                         "/spring-security-oauth-resource/**").permitAll()
                 .antMatchers(HttpMethod.POST, REGISTRATION).permitAll()
-                .antMatchers(HttpMethod.GET, LOGIN).permitAll()
+                .antMatchers(HttpMethod.POST, LOGIN).permitAll()
                 .antMatchers(HttpMethod.POST, LOGOUT).authenticated()
+                .anyRequest().authenticated()
                 .and()
                 .apply(new JwtConfigurer(jwtToken));
     }

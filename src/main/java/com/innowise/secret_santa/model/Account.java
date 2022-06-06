@@ -2,11 +2,11 @@ package com.innowise.secret_santa.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.Hibernate;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -22,12 +22,12 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
 @Builder
 @ToString
 @Entity
@@ -47,19 +47,28 @@ public class Account {
     @Column
     private LocalDateTime dateCreated;
 
-    @EqualsAndHashCode.Exclude
-//    @ToString.Exclude
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "id_role")
     private Role role;
 
-    @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Profile profile;
 
-    @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<Message> messages;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Account account = (Account) o;
+        return id != null && Objects.equals(id, account.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

@@ -7,7 +7,6 @@ public interface AccountAuthenticationService {
 
     AccountAuthenticationResponse getAuthenticationAccount(RegistrationLoginAccount account);
 
-    AccountAuthenticationResponse getAccountAuthByEmail (String email);
 
 
 }

@@ -4,6 +4,7 @@ import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import com.innowise.secret_santa.security.JwtToken;
 import com.innowise.secret_santa.service.AccountAuthenticationService;
+import com.innowise.secret_santa.util.ValidationParameter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpHeaders;
@@ -31,10 +32,18 @@ public class AuthenticationController {
     @PostMapping("/login")
     @ApiOperation("Authentication")
     public ResponseEntity<HttpStatus> authenticationAccount(@RequestBody RegistrationLoginAccount account) {
+        ValidationParameter.checkParameterIsEmpty(account.getEmail(), account.getPassword());
         HttpHeaders responseHeader = new HttpHeaders();
         AccountAuthenticationResponse authenticationAccount = service.getAuthenticationAccount(account);
-        responseHeader.set("Authorization", token.getJWTToken(authenticationAccount.getEmail(), authenticationAccount.getRole().getRoleName().getRole()));
-
+        responseHeader.set
+                (
+                        "Authorization",
+                        token.getJWTToken
+                                (
+                                        authenticationAccount.getEmail(),
+                                        authenticationAccount.getRole().getRoleName().getRole()
+                                )
+                );
         return ResponseEntity.ok().headers(responseHeader).body(HttpStatus.OK);
     }
 }
