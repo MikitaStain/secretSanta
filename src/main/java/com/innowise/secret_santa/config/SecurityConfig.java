@@ -24,7 +24,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.jwtToken = jwtToken;
     }
 
-
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
@@ -56,5 +55,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
+
 
 }

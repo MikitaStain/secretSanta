@@ -1,5 +1,19 @@
 spring:
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+
+
   liquibase:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-root.yml
@@ -21,8 +35,8 @@ spring:
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/secret_santa
-    username: postgres
-    password: 7403663
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
 
 springfox:
   documentation:
@@ -36,5 +50,15 @@ server:
 
 jwt:
   token:
-    secret: secretKey
-    expired: 3600000
+    secret: ${JWT_KEY}
+    expired: ${JWT_EXPIRED}
+
+logging:
+  level:
+    org.springframework: ERROR
+    com.innowise.secret_santa: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: app.log

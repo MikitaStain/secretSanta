@@ -15,6 +15,7 @@ import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationRes
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.repository.AccountRepository;
 import com.innowise.secret_santa.repository.RoleRepository;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+
 
 @Service
 @Transactional
@@ -33,31 +35,45 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     private final PasswordEncoder encoder;
     private final PageService<AccountDto> pageService;
-    private final MessageService messageService;
+    private final Logger logger;
+    private final EmailService emailService;
+
+
 
     @Autowired
     public AccountServiceImpl(AccountRepository accountRepository,
                               RoleRepository roleRepository,
-                              AccountMapper accountMapper, PasswordEncoder encoder,
-                              PageService<AccountDto> pageService, MessageService messageService) {
+                              AccountMapper accountMapper,
+                              PasswordEncoder encoder,
+                              PageService<AccountDto> pageService,
+                              Logger logger,
+                              EmailService emailService) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
         this.accountMapper = accountMapper;
         this.encoder = encoder;
         this.pageService = pageService;
-        this.messageService = messageService;
+        this.logger = logger;
+        this.emailService = emailService;
     }
 
     @Override
     @Transactional
     public void createdAccount(RegistrationLoginAccount account) {
         checkEmail(account.getEmail());
-        Optional.of(account)
+        boolean present = Optional.of(account)
                 .map(accountMapper::toAccount)
                 .map(this::encodingPassword)
                 .map(this::setRoleForAccount)
                 .map(this::setDateCreated)
-                .map(accountRepository::save);
+                .map(accountRepository::save)
+                .isPresent();
+
+        if (present){
+            logger.info("Account by email {} successful registration", account.getEmail());
+            emailService.sendMail(account.getEmail(),account.getEmail(),"Hello");
+        }
+
 
     }
 

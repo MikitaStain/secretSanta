@@ -14,10 +14,12 @@ repositories {
 dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:$jupiterVersion"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$jupiterVersion"
+
     implementation "org.springframework.boot:spring-boot-starter:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-security:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-mail:$springBootVersion"
 
     implementation "org.postgresql:postgresql:$postgresqlVersion"
 
@@ -32,8 +34,6 @@ dependencies {
     implementation "org.liquibase:liquibase-core:$liquibaseVersion"
 
     implementation "io.jsonwebtoken:jjwt:$jsonwebtokenVersion"
-
-
 }
 
 test {
