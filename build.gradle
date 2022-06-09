@@ -20,6 +20,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-security:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
     implementation "org.springframework.boot:spring-boot-starter-mail:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-data-mongodb:$springBootVersion"
+
 
     implementation "org.postgresql:postgresql:$postgresqlVersion"
 
@@ -34,6 +36,9 @@ dependencies {
     implementation "org.liquibase:liquibase-core:$liquibaseVersion"
 
     implementation "io.jsonwebtoken:jjwt:$jsonwebtokenVersion"
+
+    implementation 'io.mongock:mongock-springboot:5.1.0'
+    implementation 'io.mongock:mongodb-springdata-v3-driver:5.1.0'
 }
 
 test {

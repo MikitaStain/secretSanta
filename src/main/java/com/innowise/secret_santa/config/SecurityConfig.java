@@ -6,14 +6,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Configuration
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     private final JwtToken jwtToken;
     private static final String REGISTRATION = "/api/registration";
@@ -24,10 +25,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.jwtToken = jwtToken;
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http.httpBasic().disable()
+        return http.httpBasic().disable()
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -41,20 +42,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/webjars/**",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
-                        "/spring-security-oauth-resource/**").permitAll()
+                        "/spring-security-oauth-resource/**",
+                        "/test").permitAll()
                 .antMatchers(HttpMethod.POST, REGISTRATION).permitAll()
                 .antMatchers(HttpMethod.POST, LOGIN).permitAll()
                 .antMatchers(HttpMethod.POST, LOGOUT).authenticated()
                 .anyRequest().authenticated()
                 .and()
-                .apply(new JwtConfigurer(jwtToken));
+                .apply(new JwtConfigurer(jwtToken))
+                .and().build();
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+
+    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
-
-
 }

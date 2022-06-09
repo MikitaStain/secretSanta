@@ -12,11 +12,21 @@ spring:
           starttls:
             enable: true
 
+  data:
+    mongodb:
+      port: 27017
+      host: localhost
+      auto-index-creation: true
+      authentication-database: admin
+      database: secret_santa
+      uri: mongodb://localhost:27017/secret_santa
 
 
   liquibase:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-root.yml
+
+
 
 
   jpa:
@@ -62,3 +72,6 @@ logging:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: app.log
+
+mongock:
+  migration-scan-package: com.innowise.secret_santa.mongodb.db.changelog

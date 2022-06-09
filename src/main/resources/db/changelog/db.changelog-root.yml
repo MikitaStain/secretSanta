@@ -17,3 +17,5 @@ databaseChangeLog:
       file: db/changelog/db.changelog.create_table_players.sql
   - include:
       file: db/changelog/db.changelog.create_table_distributions.sql
+  - include:
+      file: db/changelog/db.changelog.insert_data_table_roles.sql

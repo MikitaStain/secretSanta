@@ -1,6 +1,6 @@
 package com.innowise.secret_santa.mapper;
 
-import com.innowise.secret_santa.model.Account;
+import com.innowise.secret_santa.model.postgres.Account;
 import com.innowise.secret_santa.model.dto.AccountDto;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
@@ -15,6 +15,7 @@ public interface AccountMapper {
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "profile", ignore = true)
     @Mapping(target = "messages", ignore = true)
+
     Account toAccount(RegistrationLoginAccount accountDto);
 
 

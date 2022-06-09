@@ -1,9 +1,7 @@
 package com.innowise.secret_santa.controller;
 
-import com.innowise.secret_santa.model.Address;
-import com.innowise.secret_santa.model.Profile;
 import com.innowise.secret_santa.model.dto.ProfileDto;
-import com.innowise.secret_santa.service.ProfileService;
+import com.innowise.secret_santa.service.ProfileServiceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Api("Profile Rest Controller")
 public class ProfileController {
 
-    private final ProfileService profileService;
+    private final ProfileServiceImpl profileService;
 
     @Autowired
-    public ProfileController(ProfileService profileService) {
+    public ProfileController(ProfileServiceImpl profileService) {
         this.profileService = profileService;
     }
 

@@ -1,18 +1,18 @@
 package com.innowise.secret_santa.service;
 
-import com.innowise.secret_santa.exception.EmailUsedException;
-import com.innowise.secret_santa.exception.IncorrectEmailException;
+import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
-import com.innowise.secret_santa.exception.NotElementByIdException;
+import com.innowise.secret_santa.exception.SaveDataException;
 import com.innowise.secret_santa.mapper.AccountMapper;
-import com.innowise.secret_santa.model.Account;
 import com.innowise.secret_santa.model.RoleEnum;
+import com.innowise.secret_santa.model.TypeMessage;
 import com.innowise.secret_santa.model.dto.AccountDto;
 import com.innowise.secret_santa.model.dto.request_dto.AccountChangePassword;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
+import com.innowise.secret_santa.model.postgres.Account;
 import com.innowise.secret_santa.repository.AccountRepository;
 import com.innowise.secret_santa.repository.RoleRepository;
 import org.slf4j.Logger;
@@ -36,9 +36,7 @@ public class AccountServiceImpl implements AccountService {
     private final PasswordEncoder encoder;
     private final PageService<AccountDto> pageService;
     private final Logger logger;
-    private final EmailService emailService;
-
-
+    private final SystemMessageService messageService;
 
     @Autowired
     public AccountServiceImpl(AccountRepository accountRepository,
@@ -47,34 +45,31 @@ public class AccountServiceImpl implements AccountService {
                               PasswordEncoder encoder,
                               PageService<AccountDto> pageService,
                               Logger logger,
-                              EmailService emailService) {
+                              SystemMessageService messageService) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
         this.accountMapper = accountMapper;
         this.encoder = encoder;
         this.pageService = pageService;
         this.logger = logger;
-        this.emailService = emailService;
+        this.messageService = messageService;
     }
 
     @Override
     @Transactional
     public void createdAccount(RegistrationLoginAccount account) {
+
         checkEmail(account.getEmail());
-        boolean present = Optional.of(account)
+        Account present = Optional.of(account)
                 .map(accountMapper::toAccount)
                 .map(this::encodingPassword)
                 .map(this::setRoleForAccount)
                 .map(this::setDateCreated)
                 .map(accountRepository::save)
-                .isPresent();
+                .orElseThrow(() -> new SaveDataException("failed to created Account"));
 
-        if (present){
-            logger.info("Account by email {} successful registration", account.getEmail());
-            emailService.sendMail(account.getEmail(),account.getEmail(),"Hello");
-        }
-
-
+        messageService.messageService(TypeMessage.CREATED, present.getId(), present.getEmail());
+        logger.info("Account by email {} successful registration", present.getEmail());
     }
 
     private Account encodingPassword(Account account) {
@@ -84,7 +79,7 @@ public class AccountServiceImpl implements AccountService {
 
     private void checkEmail(String email) {
         if (accountRepository.existsByEmail(email)) {
-            throw new EmailUsedException("Email " + email + " already use");
+            throw new IncorrectDataException("Email " + email + " already use");
         }
     }
 
@@ -104,7 +99,7 @@ public class AccountServiceImpl implements AccountService {
         return Optional.ofNullable(email)
                 .map(accountRepository::findAccountByEmail)
                 .map(accountMapper::toAccountAuthenticationResponse)
-                .orElseThrow(() -> new IncorrectEmailException("Email by name '" + email + "' incorrect"));
+                .orElseThrow(() -> new IncorrectDataException("Email by name '" + email + "' incorrect"));
     }
 
     @Override
@@ -121,7 +116,7 @@ public class AccountServiceImpl implements AccountService {
 
     private Account getAccountById(Long id) {
         return accountRepository.findById(id)
-                .orElseThrow(() -> new NotElementByIdException("Account by id '" + id + "' not found"));
+                .orElseThrow(() -> new NoDataFoundException("Account by id '" + id + "' not found"));
     }
 
     @Override
@@ -129,10 +124,14 @@ public class AccountServiceImpl implements AccountService {
     public AccountDto changePasswordAccount(Long id, AccountChangePassword account) {
 
         Account accountById = getAccountById(id);
-        if (encoder.matches(account.getOldPassword(), accountById.getPassword())) {
-            accountById.setPassword(account.getNewPassword());
-            accountRepository.save(encodingPassword(accountById));
+        if (!encoder.matches(account.getOldPassword(), accountById.getPassword())) {
+            throw new IncorrectDataException("Password incorrect, please write it again");
         }
+        accountById.setPassword(account.getNewPassword());
+        accountRepository.save(encodingPassword(accountById));
+        logger.info("Account {} changed password", accountById.getEmail());
+        messageService.messageService(TypeMessage.CHANGE_PASSWORD, accountById.getId(), accountById.getEmail());
+
         return accountMapper.toAccountDto(accountById);
     }
 

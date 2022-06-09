@@ -1,7 +1,6 @@
 package com.innowise.secret_santa.service;
 
-import com.innowise.secret_santa.exception.IncorrectEmailException;
-import com.innowise.secret_santa.exception.IncorrectPasswordException;
+import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +23,10 @@ public class AccountAuthenticationServiceImpl implements AccountAuthenticationSe
     public AccountAuthenticationResponse getAuthenticationAccount(RegistrationLoginAccount account) {
         AccountAuthenticationResponse accountByEmail = service.getAccountAuthByEmail(account.getEmail());
         if (accountByEmail == null) {
-            throw new IncorrectEmailException("Email is incorrect: " + account.getEmail());
+            throw new IncorrectDataException("Email is incorrect: " + account.getEmail());
         }
         if (!encoder.matches(account.getPassword(), accountByEmail.getPassword())) {
-            throw new IncorrectPasswordException("Password is incorrect!!!");
+            throw new IncorrectDataException("Password is incorrect!!!");
         }
         return accountByEmail;
     }

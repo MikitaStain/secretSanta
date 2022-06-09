@@ -1,8 +1,7 @@
 package com.innowise.secret_santa.controller;
 
-import com.innowise.secret_santa.model.Address;
 import com.innowise.secret_santa.model.dto.AddressDto;
-import com.innowise.secret_santa.service.AddressService;
+import com.innowise.secret_santa.service.AddressServiceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Api("Address Rest Controller")
 public class AddressController {
 
-    private final AddressService addressService;
+    private final AddressServiceImpl addressService;
 
     @Autowired
-    public AddressController(AddressService addressService) {
+    public AddressController(AddressServiceImpl addressService) {
         this.addressService = addressService;
     }
 
@@ -32,9 +31,9 @@ public class AddressController {
     @ApiOperation("getting a address by id")
     public ResponseEntity<AddressDto> getUser(@PathVariable("id") Long id) {
 
-        AddressDto address = addressService.getAddressById(id);
 
-        return new ResponseEntity<>(address, HttpStatus.OK);
+
+        return new ResponseEntity<>(new AddressDto(), HttpStatus.OK);
     }
 
     @PostMapping

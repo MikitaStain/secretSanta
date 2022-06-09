@@ -1,6 +1,6 @@
 package com.innowise.secret_santa.mapper;
 
-import com.innowise.secret_santa.model.Role;
+import com.innowise.secret_santa.model.postgres.Role;
 import com.innowise.secret_santa.model.dto.RoleDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

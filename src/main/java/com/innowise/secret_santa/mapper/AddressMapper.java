@@ -1,6 +1,6 @@
 package com.innowise.secret_santa.mapper;
 
-import com.innowise.secret_santa.model.Address;
+import com.innowise.secret_santa.model.postgres.Address;
 import com.innowise.secret_santa.model.dto.AddressDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

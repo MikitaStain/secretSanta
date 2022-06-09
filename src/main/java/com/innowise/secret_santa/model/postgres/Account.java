@@ -1,4 +1,4 @@
-package com.innowise.secret_santa.model;
+package com.innowise.secret_santa.model.postgres;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
