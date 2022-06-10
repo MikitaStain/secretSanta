@@ -15,7 +15,6 @@ public interface ProfileMapper {
     @Mapping(target = "account.dateCreated", ignore = true)
     @Mapping(target = "account.role", ignore = true)
     @Mapping(target = "account.profile", ignore = true)
-    @Mapping(target = "account.messages", ignore = true)
     Profile toProfile(ProfileDto profileDto);
 
     ProfileDto toProfileDto(Profile profile);
