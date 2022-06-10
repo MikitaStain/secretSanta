@@ -96,19 +96,19 @@ public class AddressServiceImpl implements AddressService {
         String numberHouse = addressDto.getNumberHouse();
         String numberApartment = addressDto.getNumberApartment();
 
-        if (country != null && !country.equals(address.getCountry())) {
+        if (!country.isBlank() && !country.equals(address.getCountry())) {
             address.setCountry(country);
         }
-        if (city != null && !city.equals(address.getCity())) {
+        if (!city.isBlank() && !city.equals(address.getCity())) {
             address.setCity(city);
         }
-        if (street != null && !street.equals(address.getStreet())) {
+        if (!street.isBlank() && !street.equals(address.getStreet())) {
             address.setStreet(street);
         }
-        if (numberHouse != null && !numberHouse.equals(address.getNumberHouse())) {
+        if (!numberHouse.isBlank() && !numberHouse.equals(address.getNumberHouse())) {
             address.setNumberHouse(numberHouse);
         }
-        if (numberApartment != null && !numberApartment.equals(address.getNumberApartment())) {
+        if (!numberApartment.isBlank() && !numberApartment.equals(address.getNumberApartment())) {
             address.setNumberApartment(numberApartment);
         }
         return address;

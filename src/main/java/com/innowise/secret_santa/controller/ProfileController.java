@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api")
 @Api("Profile Rest Controller")
 public class ProfileController {
 
@@ -27,13 +27,13 @@ public class ProfileController {
         this.profileService = profileService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{accountId}/profile/")
     @ApiOperation("getting a profile by id")
-    public ResponseEntity<ProfileDto> getProfile(@PathVariable("id") Long id) {
+    public ResponseEntity<ProfileDto> getProfileByAccountId(@PathVariable("accountId") Long id) {
 
-        ProfileDto profile = profileService.getProfileById(id);
+        ProfileDto profileDtoByAccount = profileService.getProfileDtoByAccount(id);
 
-        return new ResponseEntity<>(profile, HttpStatus.OK);
+        return new ResponseEntity<>(profileDtoByAccount, HttpStatus.OK);
     }
 
     @PostMapping
@@ -49,7 +49,7 @@ public class ProfileController {
     @ApiOperation("delete account by id")
     public ResponseEntity<HttpStatus> deleteProfile(@PathVariable("id") Long id) {
 
-        profileService.deleteProfile(id);
+        profileService.deleteProfileByAccount(id);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

@@ -13,7 +13,5 @@ public class ProfileDto {
 
     private String name;
 
-    private AccountDto account;
-
     private AddressDto address;
 }

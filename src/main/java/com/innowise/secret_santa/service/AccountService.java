@@ -7,7 +7,7 @@ import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 
-public interface AccountService {
+public interface AccountService extends AccountProfileService{
 
     void createdAccount(RegistrationLoginAccount account);
 

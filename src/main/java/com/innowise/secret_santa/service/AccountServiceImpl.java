@@ -126,7 +126,8 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new MapperException("Error mapping from Account to AccountDto"));
     }
 
-    private Account getAccountById(Long id) {
+    @Override
+    public Account getAccountById(Long id) {
 
         return Optional.ofNullable(id)
                 .flatMap(accountRepository::findById)

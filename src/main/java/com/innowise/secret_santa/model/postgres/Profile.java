@@ -48,7 +48,7 @@ public class Profile {
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "id_address")
     private Address address;
 
