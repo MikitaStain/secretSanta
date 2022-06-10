@@ -17,11 +17,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -54,10 +52,6 @@ public class Account {
     @ToString.Exclude
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Profile profile;
-
-    @ToString.Exclude
-    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private List<Message> messages;
 
     @Override
     public boolean equals(Object o) {
