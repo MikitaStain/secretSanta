@@ -26,12 +26,15 @@ public class SetMessages {
     public void setMessage() {
         MongoCollection<Document> messages = mongoTemplate.getCollection("system_messages");
         Document created = new Document()
-                .append(TEXT_MESSAGE, TypeMessage.CREATED.getTextMessage())
-                .append(TYPE_MESSAGE, TypeMessage.CREATED.name());
+                .append(TEXT_MESSAGE, TypeMessage.CREATE.getTextMessage())
+                .append(TYPE_MESSAGE, TypeMessage.CREATE.name());
         Document changed = new Document()
                 .append(TEXT_MESSAGE, TypeMessage.CHANGE_PASSWORD.getTextMessage())
                 .append(TYPE_MESSAGE, TypeMessage.CHANGE_PASSWORD.name());
-        messages.insertMany(List.of(created, changed));
+        Document delete = new Document()
+                .append(TEXT_MESSAGE, TypeMessage.DELETE.getTextMessage())
+                .append(TYPE_MESSAGE, TypeMessage.DELETE.name());
+        messages.insertMany(List.of(created, changed,delete));
     }
 
     @RollbackExecution

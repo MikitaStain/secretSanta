@@ -20,4 +20,6 @@ public interface AccountService {
     AccountDto changePasswordAccount(Long id, AccountChangePassword account);
 
     PagesDtoResponse<Object> getAllAccounts(PagesDto pages);
+
+    void comparePasswords(String currentPassword, String validPassword);
 }

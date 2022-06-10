@@ -5,7 +5,6 @@ import com.innowise.secret_santa.exception.IncorrectDataException;
 import java.util.regex.Pattern;
 
 public final class ValidationParameter {
-
     private static final String REG_EMAIL;
 
     static {

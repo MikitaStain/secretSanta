@@ -1,6 +1,7 @@
 package com.innowise.secret_santa.service;
 
 import com.innowise.secret_santa.exception.IncorrectDataException;
+import com.innowise.secret_santa.exception.MapperException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.exception.SaveDataException;
 import com.innowise.secret_santa.mapper.AccountMapper;
@@ -15,7 +16,6 @@ import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.postgres.Account;
 import com.innowise.secret_santa.repository.AccountRepository;
 import com.innowise.secret_santa.repository.RoleRepository;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,8 +35,9 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     private final PasswordEncoder encoder;
     private final PageService<AccountDto> pageService;
-    private final Logger logger;
+    private final LoggerService<?> logger;
     private final SystemMessageService messageService;
+
 
     @Autowired
     public AccountServiceImpl(AccountRepository accountRepository,
@@ -44,7 +45,7 @@ public class AccountServiceImpl implements AccountService {
                               AccountMapper accountMapper,
                               PasswordEncoder encoder,
                               PageService<AccountDto> pageService,
-                              Logger logger,
+                              LoggerService<?> logger,
                               SystemMessageService messageService) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
@@ -68,8 +69,8 @@ public class AccountServiceImpl implements AccountService {
                 .map(accountRepository::save)
                 .orElseThrow(() -> new SaveDataException("failed to created Account"));
 
-        messageService.messageService(TypeMessage.CREATED, present.getId(), present.getEmail());
-        logger.info("Account by email {} successful registration", present.getEmail());
+        messageService.messageService(TypeMessage.CREATE, present.getId(), present.getEmail());
+        logger.loggerInfo("Account by email {} successful registration", present.getEmail());
     }
 
     private Account encodingPassword(Account account) {
@@ -105,17 +106,30 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public void deleteAccount(Long id) {
-        accountRepository.delete(getAccountById(id));
+
+        Account account = Optional.of(id)
+                .map(this::getAccountById)
+                .orElseThrow(() -> new NoDataFoundException("Account by id '" + id + "' not found"));
+
+        accountRepository.delete(account);
+        logger.loggerInfo("Account by id {} delete", account.getId());
+        messageService.messageService(TypeMessage.DELETE, id, account.getEmail());
     }
 
     @Override
     @Transactional(readOnly = true)
     public AccountDto getAccountDtoById(Long id) {
-        return accountMapper.toAccountDto(getAccountById(id));
+
+        return Optional.ofNullable(id)
+                .map(this::getAccountById)
+                .map(accountMapper::toAccountDto)
+                .orElseThrow(() -> new MapperException("Error mapping from Account to AccountDto"));
     }
 
     private Account getAccountById(Long id) {
-        return accountRepository.findById(id)
+
+        return Optional.ofNullable(id)
+                .flatMap(accountRepository::findById)
                 .orElseThrow(() -> new NoDataFoundException("Account by id '" + id + "' not found"));
     }
 
@@ -123,16 +137,24 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public AccountDto changePasswordAccount(Long id, AccountChangePassword account) {
 
-        Account accountById = getAccountById(id);
-        if (!encoder.matches(account.getOldPassword(), accountById.getPassword())) {
-            throw new IncorrectDataException("Password incorrect, please write it again");
-        }
+        Account accountById = Optional.ofNullable(id)
+                .map(this::getAccountById)
+                .orElseThrow();
+
+        comparePasswords(account.getOldPassword(), accountById.getPassword());
         accountById.setPassword(account.getNewPassword());
         accountRepository.save(encodingPassword(accountById));
-        logger.info("Account {} changed password", accountById.getEmail());
+        logger.loggerInfo("Account {} changed password", accountById.getEmail());
         messageService.messageService(TypeMessage.CHANGE_PASSWORD, accountById.getId(), accountById.getEmail());
 
         return accountMapper.toAccountDto(accountById);
+    }
+
+    @Override
+    public void comparePasswords(String currentPassword, String validPassword) {
+        if (!encoder.matches(currentPassword, validPassword)) {
+            throw new IncorrectDataException("Password incorrect, please write it again");
+        }
     }
 
     @Override

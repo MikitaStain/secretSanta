@@ -4,19 +4,16 @@ import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AccountAuthenticationServiceImpl implements AccountAuthenticationService {
 
-    private final PasswordEncoder encoder;
+
     private final AccountService service;
 
     @Autowired
-    public AccountAuthenticationServiceImpl(PasswordEncoder encoder,
-                                            AccountService service) {
-        this.encoder = encoder;
+    public AccountAuthenticationServiceImpl(AccountService service) {
         this.service = service;
     }
 
@@ -25,9 +22,7 @@ public class AccountAuthenticationServiceImpl implements AccountAuthenticationSe
         if (accountByEmail == null) {
             throw new IncorrectDataException("Email is incorrect: " + account.getEmail());
         }
-        if (!encoder.matches(account.getPassword(), accountByEmail.getPassword())) {
-            throw new IncorrectDataException("Password is incorrect!!!");
-        }
+        service.comparePasswords(account.getPassword(),accountByEmail.getPassword());
         return accountByEmail;
     }
 }

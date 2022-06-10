@@ -14,18 +14,26 @@ public class SentMessageServiceImpl implements SentMessagesService {
 
     private final SentMessageMapper sentMessageMapper;
     private final MongoTemplate mongoTemplate;
+    private final LoggerService<?> logger;
     private static final String NAME_COLLECTION = "sent_messages";
 
-    public SentMessageServiceImpl(SentMessageMapper sentMessageMapper, MongoTemplate mongoTemplate) {
+    public SentMessageServiceImpl(SentMessageMapper sentMessageMapper,
+                                  MongoTemplate mongoTemplate,
+                                  LoggerService<?> logger) {
         this.sentMessageMapper = sentMessageMapper;
         this.mongoTemplate = mongoTemplate;
+        this.logger = logger;
     }
 
     public void saveSentMessage(SentMessageDto sentMessageDto) {
         Optional.ofNullable(sentMessageDto)
                 .map(sentMessageMapper::toSentMessage)
                 .map(this::setTimeInSentMessage)
-                .map(obj -> mongoTemplate.save(obj, NAME_COLLECTION));
+                .map(obj -> mongoTemplate.save(obj, NAME_COLLECTION))
+                .ifPresent(message -> logger.loggerInfo
+                        ("Save sent message for account with id: {}",
+                                message.getAccount()
+                        ));
     }
 
     private SentMessage setTimeInSentMessage(SentMessage sentMessage) {
