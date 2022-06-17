@@ -26,9 +26,6 @@ spring:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-root.yml
 
-
-
-
   jpa:
     open-in-view: true
     database-platform: org.hibernate.dialect.PostgreSQL10Dialect
@@ -54,6 +51,9 @@ springfox:
       v2:
         use-model-v3: true
 
+logging.level:
+    org.springframework.orm.jpa: DEBUG
+    org.springframework.transaction: DEBUG
 
 server:
   port: 8080

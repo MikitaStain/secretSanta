@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 public enum RoleEnum {
 
     ROLE_ADMIN("ROLE_ADMIN"),
-    ROLE_USER("ROLE_USER");
+    ROLE_USER("ROLE_USER"),
+    ROLE_ORGANIZER("ROLE_ORGANIZER");
 
     private String role;
 

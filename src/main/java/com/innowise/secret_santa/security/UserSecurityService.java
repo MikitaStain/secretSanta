@@ -1,6 +1,6 @@
 package com.innowise.secret_santa.security;
 
-import com.innowise.secret_santa.service.AccountService;
+import com.innowise.secret_santa.service.account_services.AccountEncodingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserSecurityService implements UserDetailsService {
 
-    private final AccountService service;
+    private final AccountEncodingService service;
 
     @Autowired
-    public UserSecurityService(AccountService service) {
+    public UserSecurityService(AccountEncodingService service) {
         this.service = service;
     }
 

@@ -73,4 +73,15 @@ public class GlobalExceptionAdvice {
 
         return new ResponseEntity<>(errorObject, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(NoAccessException.class)
+    public ResponseEntity<ErrorObject> handleNoAccessException(NoAccessException ex) {
+        ErrorObject errorObject = new ErrorObject();
+        errorObject.setStatusCode(HttpStatus.FORBIDDEN.value());
+        errorObject.setMessage(ex.getMessage());
+        errorObject.setTimestamp(CalendarUtils.
+                convertMilliSecondsToFormattedDate(System.currentTimeMillis()));
+
+        return new ResponseEntity<>(errorObject, HttpStatus.FORBIDDEN);
+    }
 }

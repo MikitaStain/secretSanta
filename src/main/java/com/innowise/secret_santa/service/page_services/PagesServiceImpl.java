@@ -1,4 +1,4 @@
-package com.innowise.secret_santa.service;
+package com.innowise.secret_santa.service.page_services;
 
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
@@ -28,7 +28,7 @@ public class PagesServiceImpl<T> implements PageService<T>{
                 .page(pagesDto.getPage())
                 .size(pagesDto.getSize())
                 .sort(pagesDto.getSort())
-                .dto(Arrays.asList((all).toArray()))
+                .dto(Arrays.asList(all.toArray()))
                 .build();
     }
 }

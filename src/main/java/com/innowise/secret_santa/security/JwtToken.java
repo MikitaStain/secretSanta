@@ -1,16 +1,14 @@
 package com.innowise.secret_santa.security;
 
+import com.innowise.secret_santa.exception.NoAccessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -71,9 +69,9 @@ public class JwtToken {
 
             return !claims.getBody().getExpiration().before(new Date());
 
-        } catch (JwtException | IllegalArgumentException exception) {
+        } catch (Exception exception) {
 
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Jwt token is expired");
+            throw new NoAccessException("Jwt token is expired " + exception.getMessage());
         }
     }
 

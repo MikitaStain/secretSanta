@@ -1,9 +1,10 @@
-package com.innowise.secret_santa.service;
+package com.innowise.secret_santa.service.message_services;
 
 import com.innowise.secret_santa.exception.UnknownMessageException;
 import com.innowise.secret_santa.model.TypeMessage;
 import com.innowise.secret_santa.model.dto.request_dto.SentMessageDto;
 import com.innowise.secret_santa.model.mongo.SystemMessage;
+import com.innowise.secret_santa.service.email_services.EmailService;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -32,10 +33,10 @@ public class SystemMessageServiceImpl implements SystemMessageService {
     public void messageService(TypeMessage typeMessage, Long accountId, String... emails) {
 
         String systemMessageForEmail;
-        if (emails.length==1){
+        if (emails.length == 1) {
             systemMessageForEmail = String.format(getMessage(typeMessage), emails[0]);
-        }else {
-            systemMessageForEmail = String.format(getMessage(typeMessage), emails[0],emails[1]);
+        } else {
+            systemMessageForEmail = String.format(getMessage(typeMessage), emails[0], emails[1]);
         }
         emailService.sendMail(emails[0], emails[0], systemMessageForEmail);
         saveSentMessage(systemMessageForEmail, accountId);
@@ -67,6 +68,4 @@ public class SystemMessageServiceImpl implements SystemMessageService {
                 .account(id)
                 .build());
     }
-
-
 }

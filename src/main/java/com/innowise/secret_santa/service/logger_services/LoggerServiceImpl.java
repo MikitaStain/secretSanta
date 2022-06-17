@@ -1,4 +1,4 @@
-package com.innowise.secret_santa.service;
+package com.innowise.secret_santa.service.logger_services;
 
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;

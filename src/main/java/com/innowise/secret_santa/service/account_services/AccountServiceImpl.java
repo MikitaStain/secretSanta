@@ -1,4 +1,4 @@
-package com.innowise.secret_santa.service;
+package com.innowise.secret_santa.service.account_services;
 
 import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.exception.MapperException;
@@ -6,6 +6,7 @@ import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.exception.SaveDataException;
 import com.innowise.secret_santa.mapper.AccountMapper;
 import com.innowise.secret_santa.model.RoleEnum;
+import com.innowise.secret_santa.model.SettingRolesEnum;
 import com.innowise.secret_santa.model.TypeMessage;
 import com.innowise.secret_santa.model.dto.AccountDto;
 import com.innowise.secret_santa.model.dto.request_dto.AccountChangePassword;
@@ -14,8 +15,12 @@ import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.postgres.Account;
+import com.innowise.secret_santa.model.postgres.Role;
 import com.innowise.secret_santa.repository.AccountRepository;
 import com.innowise.secret_santa.repository.RoleRepository;
+import com.innowise.secret_santa.service.logger_services.LoggerService;
+import com.innowise.secret_santa.service.message_services.SystemMessageService;
+import com.innowise.secret_santa.service.page_services.PageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,12 +28,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 
 @Service
 @Transactional
-public class AccountServiceImpl implements AccountService {
+public class AccountServiceImpl implements AccountService,
+        AccountProfileService,
+        AccountEncodingService,
+        AccountRegistrationService,
+        AccountGameService {
 
     private final AccountRepository accountRepository;
     private final RoleRepository roleRepository;
@@ -85,7 +95,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private Account setRoleForAccount(Account account) {
-        account.setRole(roleRepository.findRoleByRoleName(RoleEnum.ROLE_USER));
+        account.setRole(List.of(roleRepository.findRoleByRoleName(RoleEnum.ROLE_USER)));
         return account;
     }
 
@@ -167,5 +177,39 @@ public class AccountServiceImpl implements AccountService {
             throw new NoDataFoundException("Accounts not found");
         }
         return pageService.getPagesDtoResponse(pages, listAccount.getContent());
+    }
+
+    @Override
+    public void setRoleToAccount(Long id, RoleEnum role, SettingRolesEnum flag) {
+
+        Optional.ofNullable(id)
+                .map(this::getAccountById)
+                .map(account -> getAccountWithAddRoleOrDeleteRole(account, role, flag))
+                .map(accountRepository::save)
+                .orElseThrow(() -> new NoDataFoundException("Filed to change role for account by id: " + id));
+    }
+
+    private Account getAccountWithAddRoleOrDeleteRole(Account account, RoleEnum roleEnum, SettingRolesEnum flag) {
+
+        List<Role> role = account.getRole();
+
+        if (flag.equals(SettingRolesEnum.ADD)) {
+            addNewRoleToAccount(role, roleEnum);
+        }
+        if (flag.equals(SettingRolesEnum.DELETE)) {
+            deleteRoleFromAccount(role, roleEnum);
+        }
+        account.setRole(role);
+        return account;
+    }
+
+    private void addNewRoleToAccount(List<Role> roles, RoleEnum roleEnum) {
+        if (roles.stream().noneMatch(role -> role.getRoleName().equals(roleEnum))) {
+            roles.add(roleRepository.findRoleByRoleName(roleEnum));
+        }
+    }
+
+    private void deleteRoleFromAccount(List<Role> roles, RoleEnum roleEnum) {
+        roles.removeIf(next -> next.getRoleName().equals(roleEnum));
     }
 }

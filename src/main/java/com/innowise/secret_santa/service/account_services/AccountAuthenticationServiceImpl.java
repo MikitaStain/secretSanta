@@ -1,4 +1,4 @@
-package com.innowise.secret_santa.service;
+package com.innowise.secret_santa.service.account_services;
 
 import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 public class AccountAuthenticationServiceImpl implements AccountAuthenticationService {
 
 
-    private final AccountService service;
+    private final AccountEncodingService service;
 
     @Autowired
-    public AccountAuthenticationServiceImpl(AccountService service) {
+    public AccountAuthenticationServiceImpl(AccountEncodingService service) {
         this.service = service;
     }
 
@@ -22,7 +22,7 @@ public class AccountAuthenticationServiceImpl implements AccountAuthenticationSe
         if (accountByEmail == null) {
             throw new IncorrectDataException("Email is incorrect: " + account.getEmail());
         }
-        service.comparePasswords(account.getPassword(),accountByEmail.getPassword());
+        service.comparePasswords(account.getPassword(), accountByEmail.getPassword());
         return accountByEmail;
     }
 }

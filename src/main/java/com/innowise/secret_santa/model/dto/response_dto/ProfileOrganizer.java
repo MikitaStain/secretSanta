@@ -1,17 +1,15 @@
-package com.innowise.secret_santa.model.dto;
+package com.innowise.secret_santa.model.dto.response_dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 @Builder
-public class AccountDto implements Serializable {
+public class ProfileOrganizer {
 
-    private String email;
+    private String name;
 }

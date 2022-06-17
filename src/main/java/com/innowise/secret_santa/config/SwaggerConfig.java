@@ -38,7 +38,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    SecurityContext securityContext() {
+    public SecurityContext securityContext() {
         return SecurityContext.builder()
                 .securityReferences(defaultAuth())
                 .build();

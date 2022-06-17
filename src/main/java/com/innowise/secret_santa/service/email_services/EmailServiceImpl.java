@@ -1,4 +1,4 @@
-package com.innowise.secret_santa.service;
+package com.innowise.secret_santa.service.email_services;
 
 import com.innowise.secret_santa.exception.ErrorSendEmailException;
 import org.springframework.beans.factory.annotation.Autowired;

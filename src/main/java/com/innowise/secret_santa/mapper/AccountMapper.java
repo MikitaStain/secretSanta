@@ -12,8 +12,8 @@ public interface AccountMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "dateCreated", ignore = true)
-    @Mapping(target = "role", ignore = true)
     @Mapping(target = "profile", ignore = true)
+    @Mapping(target = "role", ignore = true)
     Account toAccount(RegistrationLoginAccount accountDto);
     AccountDto toAccountDto(Account account);
     AccountAuthenticationResponse toAccountAuthenticationResponse(Account account);

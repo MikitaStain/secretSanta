@@ -1,8 +1,9 @@
-package com.innowise.secret_santa.service;
+package com.innowise.secret_santa.service.message_services;
 
 import com.innowise.secret_santa.mapper.SentMessageMapper;
 import com.innowise.secret_santa.model.dto.request_dto.SentMessageDto;
 import com.innowise.secret_santa.model.mongo.SentMessage;
+import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.util.CalendarUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;

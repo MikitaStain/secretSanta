@@ -5,6 +5,7 @@ import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationRes
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class UserSecurityFactory {
@@ -21,8 +22,14 @@ public final class UserSecurityFactory {
 
     }
 
-    private static List<GrantedAuthority> mapToAuthority(RoleDto role) {
+    private static List<GrantedAuthority> mapToAuthority(List<RoleDto> role) {
 
-        return List.of(new SimpleGrantedAuthority(role.getRoleName().getRole()));
+        List<GrantedAuthority> listRole = new ArrayList<>();
+
+        for (RoleDto roleDto : role) {
+            listRole.add(new SimpleGrantedAuthority(roleDto.getRoleName().getRole()));
+        }
+
+        return listRole;
     }
 }

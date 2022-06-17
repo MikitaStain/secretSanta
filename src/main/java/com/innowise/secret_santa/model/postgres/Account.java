@@ -16,10 +16,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -45,9 +47,12 @@ public class Account {
     @Column
     private LocalDateTime dateCreated;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "id_role")
-    private Role role;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(schema = "application", name = "accounts_roles",
+            joinColumns = @JoinColumn(name = "id_account"),
+            inverseJoinColumns = @JoinColumn(name = "id_role"))
+    @ToString.Exclude
+    private List<Role> role;
 
     @ToString.Exclude
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
