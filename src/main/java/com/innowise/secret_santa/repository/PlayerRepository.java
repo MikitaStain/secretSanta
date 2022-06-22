@@ -4,4 +4,9 @@ import com.innowise.secret_santa.model.postgres.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PlayerRepository extends JpaRepository<Player, Long> {
+
+    void deletePlayerByGameNameGame(String gameName);
+
+    Player findPlayerByProfileAccountId(Long idAccount);
+
 }

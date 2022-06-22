@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Service
-public class ProfileServiceImpl implements ProfileService, ProfileGameService {
+public class ProfileServiceImpl implements ProfileService, ProfileGamePlayerService {
     private final ProfileRepository profileRepository;
     private final ProfileMapper profileMapper;
     private final LoggerService<ProfileDto> logger;
