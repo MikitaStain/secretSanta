@@ -19,7 +19,7 @@ public class LoggerServiceImpl<T> implements LoggerService<T> {
 
     @Override
     public T logger(String message, T objects) {
-        logger.info(message);
+        logger.info(message, objects);
         return objects;
     }
 }

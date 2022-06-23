@@ -61,7 +61,7 @@ public class PlayerServiceImpl implements PlayerService {
                 .map(this::setDateCreated)
                 .map(playerRepository::save)
                 .ifPresent(player -> loggerService.logger("Account by id: {}, created player"
-                        , player.getProfile().getAccount().getId()));
+                        , idAccount));
     }
 
     private Player setGameInPlayer(String gameName, Player player) {

@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public enum TypeMessage {
-    //TODO write all types messages
     INFO,
     CREATE("Hello %s, you register in secret santa successful"),
     CHANGE_PASSWORD("%s, your password changed successful"),
