@@ -13,11 +13,11 @@ public interface GameService {
 
     GameResponseDto getGameById(Long idGame);
 
-    void deleteGame (Long idAccount);
+    void deleteGame (Long idAccount, String nameGame);
 
     PagesDtoResponse<Object> getAllGames(PagesDto pages);
 
-    GameResponseDto changeGame(GameRequestDto game, Long idAccount);
+    GameResponseDto changeGame(GameRequestDto game, Long idAccount, String nameGame);
 
     List<GameResponseDto> getAllGamesAccounts(Long idAccount);
 }

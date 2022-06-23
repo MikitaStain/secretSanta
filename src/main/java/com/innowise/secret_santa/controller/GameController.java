@@ -51,9 +51,9 @@ public class GameController {
 
     @DeleteMapping
     @ApiOperation("Delete game for current account")
-    @PreAuthorize("isAuthenticated() and hasAnyRole('ROLE_ADMIN','ROLE_ORGANIZER')")
-    public ResponseEntity<HttpStatus> deleteGame() {
-        gameService.deleteGame(HandleAuthorities.getIdAuthenticationAccount());
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_ORGANIZER')")
+    public ResponseEntity<HttpStatus> deleteGame(@RequestParam String nameGame) {
+        gameService.deleteGame(HandleAuthorities.getIdAuthenticationAccount(), nameGame);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -68,9 +68,10 @@ public class GameController {
     @PatchMapping
     @ApiOperation("Change game for current account")
     @PreAuthorize("hasRole('ROLE_ORGANIZER')")
-    public ResponseEntity<GameResponseDto> changeGame(@RequestBody GameRequestDto game) {
+    public ResponseEntity<GameResponseDto> changeGame(@RequestBody GameRequestDto game,
+                                                      @RequestParam String nameGame) {
         GameResponseDto gameResponseDto =
-                gameService.changeGame(game, HandleAuthorities.getIdAuthenticationAccount());
+                gameService.changeGame(game, HandleAuthorities.getIdAuthenticationAccount(), nameGame);
         return new ResponseEntity<>(gameResponseDto, HttpStatus.OK);
     }
 

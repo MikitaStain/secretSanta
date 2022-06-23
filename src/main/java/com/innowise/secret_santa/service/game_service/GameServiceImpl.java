@@ -70,13 +70,24 @@ public class GameServiceImpl implements GameService,
                 .map(profileGameService::getProfileByAccountId)
                 .orElseThrow(() -> new NoDataFoundException("Profile not found for current account"));
         game.setOrganizer(organizer);
-        setOrganizerRoleForAccount(idAccount);
+        if (!checkInOrganizerForAdd(organizer.getId())) {
+            setOrganizerRoleForAccount(idAccount);
+        }
         return game;
+    }
+
+    private boolean checkInOrganizerForAdd(Long idProfile) {
+        return gameRepository
+                .findAll()
+                .stream()
+                .anyMatch(game -> game.getOrganizer().getId().equals(idProfile));
+
     }
 
     private void setOrganizerRoleForAccount(Long idAccount) {
         accountGameService.setRoleToAccount(idAccount, RoleEnum.ROLE_ORGANIZER, SettingRolesEnum.ADD);
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -89,25 +100,39 @@ public class GameServiceImpl implements GameService,
 
     @Override
     @Transactional
-    public void deleteGame(Long idAccount) {
-        Game game = Optional.ofNullable(idAccount)
-                .map(gameRepository::findGameByOrganizerAccountId)
+    public void deleteGame(Long idAccount, String nameGame) {
+
+        List<Game> allByOrganizerAccountId =
+                gameRepository.findAllByOrganizerAccountId(idAccount);
+
+        Game game = Optional.ofNullable(allByOrganizerAccountId)
+                .map(games -> getGameByName(games, nameGame))
                 .orElseThrow(() -> new NoDataFoundException("Current account isn't organizer"));
 
-        accountGameService.setRoleToAccount(idAccount, RoleEnum.ROLE_ORGANIZER, SettingRolesEnum.DELETE);
-
+        if (allByOrganizerAccountId.size() == 1) {
+            accountGameService.setRoleToAccount(idAccount, RoleEnum.ROLE_ORGANIZER, SettingRolesEnum.DELETE);
+        }
         gameRepository.delete(game);
     }
 
     @Override
     @Transactional
-    public GameResponseDto changeGame(GameRequestDto game, Long idAccount) {
+    public GameResponseDto changeGame(GameRequestDto game, Long idAccount, String nameGame) {
         return Optional.ofNullable(idAccount)
-                .map(gameRepository::findGameByOrganizerAccountId)
+                .map(gameRepository::findAllByOrganizerAccountId)
+                .map(games -> getGameByName(games, nameGame))
                 .map(oldGame -> setNewDataInGame(oldGame, game))
                 .map(gameRepository::save)
                 .map(gameMapper::toGameResponseDto)
                 .orElseThrow(() -> new MapperException("Filed to change game this account"));
+    }
+
+    private Game getGameByName(List<Game> games, String nameGame) {
+        return games
+                .stream()
+                .filter(item -> item.getNameGame().equals(nameGame))
+                .findAny()
+                .orElseThrow(() -> new NoDataFoundException("Game by name: " + nameGame + " not found"));
     }
 
     private Game setNewDataInGame(Game oldGame, GameRequestDto newGame) {

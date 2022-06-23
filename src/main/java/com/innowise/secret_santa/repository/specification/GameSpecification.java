@@ -1,5 +1,6 @@
 package com.innowise.secret_santa.repository.specification;
 
+
 import com.innowise.secret_santa.model.postgres.Account_;
 import com.innowise.secret_santa.model.postgres.Game;
 import com.innowise.secret_santa.model.postgres.Game_;

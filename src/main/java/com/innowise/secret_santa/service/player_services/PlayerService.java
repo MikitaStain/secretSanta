@@ -4,7 +4,8 @@ import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.request_dto.PlayerRequestDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.dto.response_dto.PlayerResponseDto;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 public interface PlayerService {
 
@@ -12,11 +13,11 @@ public interface PlayerService {
 
     PlayerResponseDto getPlayerById(Long id);
 
-    void deletePlayerByNameGame(String nameGame);
+    void deletePlayerByNameGame(String nameGame, Long idAccount);
 
-    @Transactional(readOnly = true)
     PagesDtoResponse<Object> getAllPlayers(PagesDto pages);
 
-    @Transactional
     PlayerResponseDto changePlayer(PlayerRequestDto playerRequestDto, Long idAccount);
+
+    List<PlayerResponseDto> getAllPlayersFromGame(String nameGame, Long idAuthenticationAccount);
 }

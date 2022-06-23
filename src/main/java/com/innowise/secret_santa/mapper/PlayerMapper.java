@@ -19,7 +19,12 @@ public interface PlayerMapper {
     @Mapping(target = "account.profile", ignore = true)
     Profile toProfile(ProfileDto profileDto);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "timeRegistration", ignore = true)
+    @Mapping(target = "profile", ignore = true)
+    @Mapping(target = "game", ignore = true)
     Player toPlayer(PlayerRequestDto playerRequestDto);
+
 
     PlayerResponseDto toPlayerResponseDto(Player player);
 

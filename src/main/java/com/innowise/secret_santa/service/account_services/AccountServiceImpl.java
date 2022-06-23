@@ -182,11 +182,14 @@ public class AccountServiceImpl implements AccountService,
     @Override
     public void setRoleToAccount(Long id, RoleEnum role, SettingRolesEnum flag) {
 
-        Optional.ofNullable(id)
+        Account acc = Optional.ofNullable(id)
                 .map(this::getAccountById)
                 .map(account -> getAccountWithAddRoleOrDeleteRole(account, role, flag))
                 .map(accountRepository::save)
                 .orElseThrow(() -> new NoDataFoundException("Filed to change role for account by id: " + id));
+
+        logger.loggerInfo("Account by id {} set role - 'ROLE_ORGANIZER'", acc.getId());
+
     }
 
     private Account getAccountWithAddRoleOrDeleteRole(Account account, RoleEnum roleEnum, SettingRolesEnum flag) {

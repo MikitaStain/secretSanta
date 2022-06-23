@@ -1,13 +1,16 @@
 package com.innowise.secret_santa.service.player_services;
 
 import com.innowise.secret_santa.exception.MapperException;
+import com.innowise.secret_santa.exception.NoAccessException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.mapper.PlayerMapper;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.request_dto.PlayerRequestDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.dto.response_dto.PlayerResponseDto;
+import com.innowise.secret_santa.model.postgres.Game;
 import com.innowise.secret_santa.model.postgres.Player;
+import com.innowise.secret_santa.model.postgres.Profile;
 import com.innowise.secret_santa.repository.PlayerRepository;
 import com.innowise.secret_santa.service.game_service.GamePlayerService;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
@@ -19,7 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PlayerServiceImpl implements PlayerService {
@@ -47,6 +52,7 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
+    @Transactional
     public void registrationInGame(String nameGame, PlayerRequestDto playerRequestDto, Long idAccount) {
         Optional.ofNullable(playerRequestDto)
                 .map(playerMapper::toPlayer)
@@ -78,6 +84,7 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PlayerResponseDto getPlayerById(Long id) {
         return Optional.ofNullable(id)
                 .flatMap(playerRepository::findById)
@@ -86,9 +93,28 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public void deletePlayerByNameGame(String nameGame) {
-        Optional.ofNullable(nameGame)
-                .ifPresent(playerRepository::deletePlayerByGameNameGame);
+    @Transactional
+    public void deletePlayerByNameGame(String nameGame, Long idAccount) {
+        Player player = Optional.ofNullable(nameGame)
+                .map(gamePlayerService::getGameByName)
+                .map(Game::getPlayers)
+                .map(players -> compareTo(idAccount, players))
+                .orElseThrow(() -> new NoDataFoundException("You don't have game with name: " + nameGame));
+        playerRepository.delete(player);
+        loggerService.loggerInfo("Account by id: {0} deleted from game: {1}", idAccount, nameGame);
+    }
+
+    private Player compareTo(Long accountId, List<Player> playersGame) {
+
+        List<Player> players = profileGamePlayerService.getProfileByAccountId(accountId).getPlayers();
+        if (players == null) {
+            throw new NoDataFoundException("You don't participate in this game");
+        }
+        players.retainAll(playersGame);
+        return Optional.of(players)
+                .flatMap(listPlayer -> listPlayer.stream().findAny())
+                .orElseThrow(() -> new NoDataFoundException("You don't participate in this game"));
+
     }
 
     @Override
@@ -125,5 +151,23 @@ public class PlayerServiceImpl implements PlayerService {
             player.setNecessaryThings(necessaryThings);
         }
         return player;
+    }
+
+    @Override
+    public List<PlayerResponseDto> getAllPlayersFromGame(String nameGame, Long idAuthenticationAccount) {
+
+        Game gameByName = gamePlayerService.getGameByName(nameGame);
+        Profile organizer = gameByName.getOrganizer();
+        Profile profileByAccountId = profileGamePlayerService.getProfileByAccountId(idAuthenticationAccount);
+        if (!organizer.getId().equals(profileByAccountId.getId())) {
+            throw new NoAccessException("Account by id: " + idAuthenticationAccount + " doesn't have permission");
+        }
+        return Optional.of(gameByName)
+                .map(Game::getPlayers)
+                .map(players -> players
+                        .stream()
+                        .map(playerMapper::toPlayerResponseDto)
+                        .collect(Collectors.toList()))
+                .orElseThrow(() -> new NoDataFoundException("Game: " + nameGame + " doesn't have players"));
     }
 }
