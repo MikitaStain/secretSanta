@@ -15,5 +15,7 @@ public interface GameMapper {
     @Mapping(target = "timeCreated", ignore = true)
     @Mapping(target = "organizer", ignore = true)
     @Mapping(target = "players", ignore = true)
+    @Mapping(target = "statusGame", ignore = true)
+    @Mapping(target = "typeGame", ignore = true)
     Game toGameFromGameRequestDto(GameRequestDto gameRequestDto);
 }

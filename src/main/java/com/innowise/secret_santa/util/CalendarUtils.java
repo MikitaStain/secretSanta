@@ -1,6 +1,8 @@
 package com.innowise.secret_santa.util;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 
 public final class CalendarUtils {
@@ -17,5 +19,12 @@ public final class CalendarUtils {
         calendar.setTimeInMillis(milliSeconds);
 
         return format.format(calendar.getTime());
+    }
+
+    public static LocalDateTime getFormatDate(LocalDateTime localDateTime) {
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm dd-MM-yyyy");
+        String data = dtf.format(localDateTime);
+        return LocalDateTime.parse(data, dtf);
     }
 }

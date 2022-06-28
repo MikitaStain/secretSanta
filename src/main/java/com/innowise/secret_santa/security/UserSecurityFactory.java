@@ -19,7 +19,6 @@ public final class UserSecurityFactory {
                 account.getEmail(),
                 account.getPassword(),
                 mapToAuthority(account.getRole()));
-
     }
 
     private static List<GrantedAuthority> mapToAuthority(List<RoleDto> role) {

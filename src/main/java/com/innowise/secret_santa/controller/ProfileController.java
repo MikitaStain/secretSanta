@@ -5,6 +5,7 @@ import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.service.profile_services.ProfileService;
 import com.innowise.secret_santa.util.HandleAuthorities;
+import com.innowise.secret_santa.util.ValidationParameter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class ProfileController {
 
     @GetMapping("/{idProfile}")
     @ApiOperation("Get profile by id")
-    @PreAuthorize("hasPermission('ROLE_ORGANIZER', authentication.principal.authorities)")
+    @PreAuthorize("hasPermission('ROLE_ADMIN', authentication.principal.authorities)")
     public ResponseEntity<ProfileDto> getProfileById(@PathVariable("idProfile") Long idProfile) {
 
         ProfileDto profileDtoByAccount = profileService.getProfileDtoById(idProfile);
@@ -46,7 +47,7 @@ public class ProfileController {
     @GetMapping
     @ApiOperation("Get currency profile")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ProfileDto> getCurrencyProfile(){
+    public ResponseEntity<ProfileDto> getCurrencyProfile() {
 
         ProfileDto profile = profileService.getCurrencyProfile(HandleAuthorities.getIdAuthenticationAccount());
 
@@ -57,6 +58,8 @@ public class ProfileController {
     @ApiOperation("save a profile")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HttpStatus> createProfile(@RequestBody ProfileDto profile) {
+
+        ValidationParameter.checkParameterIsEmpty(profile.getName());
 
         profileService.createdProfile(profile, HandleAuthorities.getIdAuthenticationAccount());
 
@@ -73,13 +76,13 @@ public class ProfileController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PatchMapping("/{idProfile}")
+    @PatchMapping
     @ApiOperation("Change profile")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ProfileDto> changeProfile(@PathVariable("idProfile") Long idProfile,
-                                                    @RequestBody ProfileDto newProfileData) {
+    public ResponseEntity<ProfileDto> changeProfile(@RequestBody ProfileDto newProfileData) {
 
-        ProfileDto profile = profileService.updateProfile(idProfile, newProfileData);
+        ProfileDto profile = profileService.updateProfile(HandleAuthorities.getIdAuthenticationAccount(),
+                newProfileData);
 
         return new ResponseEntity<>(profile, HttpStatus.OK);
     }

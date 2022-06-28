@@ -1,8 +1,9 @@
 package com.innowise.secret_santa.model.postgres;
 
+import com.innowise.secret_santa.model.StatusGame;
+import com.innowise.secret_santa.model.TypeGame;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,6 +13,8 @@ import org.hibernate.Hibernate;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -38,7 +41,6 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer")
@@ -62,6 +64,17 @@ public class Game {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "game", cascade = CascadeType.REMOVE)
     @ToString.Exclude
     private List<Player> players;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private StatusGame statusGame;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private TypeGame typeGame;
+
+    @Column
+    private String password;
 
     @Override
     public boolean equals(Object o) {

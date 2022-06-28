@@ -25,7 +25,7 @@ public class RegistrationAccountController {
 
     @PostMapping("/registration")
     @ApiOperation("Registration")
-    @PreAuthorize(value = "isAnonymous()")
+    @PreAuthorize("isAnonymous()")
     public ResponseEntity<HttpStatus> registrationAccount(@RequestBody RegistrationLoginAccount account) {
 
         ValidationParameter.checkParameterIsEmpty(account.getEmail());

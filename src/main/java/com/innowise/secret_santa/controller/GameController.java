@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/games")
+@RequestMapping("api/accounts/profiles/games")
 @Api("Controller about game")
 public class GameController {
 
@@ -43,6 +43,7 @@ public class GameController {
     public ResponseEntity<GameResponseDto> createGame(@RequestBody GameRequestDto game) {
 
         ValidationParameter.checkParameterIsEmpty(game.getNameGame());
+        ValidationParameter.checkDateBefore(game.getTimeEnd());
 
         GameResponseDto newGame = gameService.createGame(game, HandleAuthorities.getIdAuthenticationAccount());
 
@@ -51,15 +52,19 @@ public class GameController {
 
     @DeleteMapping
     @ApiOperation("Delete game for current account")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_ORGANIZER')")
+    @PreAuthorize("hasPermission('ROLE_ADMIN', authentication.principal.authorities) or " +
+            "hasPermission('ROLE_ORGANIZER', authentication.principal.authorities)")
     public ResponseEntity<HttpStatus> deleteGame(@RequestParam String nameGame) {
+
+        ValidationParameter.checkParameterIsEmpty(nameGame);
+
         gameService.deleteGame(HandleAuthorities.getIdAuthenticationAccount(), nameGame);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/{id}")
     @ApiOperation("Get game by id")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasPermission('ROLE_ADMIN', authentication.principal.authorities)")
     public ResponseEntity<GameResponseDto> getGameByID(@PathVariable("id") Long id) {
         GameResponseDto gameById = gameService.getGameById(id);
         return new ResponseEntity<>(gameById, HttpStatus.OK);
@@ -67,9 +72,12 @@ public class GameController {
 
     @PatchMapping
     @ApiOperation("Change game for current account")
-    @PreAuthorize("hasRole('ROLE_ORGANIZER')")
+    @PreAuthorize("hasPermission('ROLE_ORGANIZER', authentication.principal.authorities)")
     public ResponseEntity<GameResponseDto> changeGame(@RequestBody GameRequestDto game,
                                                       @RequestParam String nameGame) {
+
+        ValidationParameter.checkParameterIsEmpty(nameGame);
+
         GameResponseDto gameResponseDto =
                 gameService.changeGame(game, HandleAuthorities.getIdAuthenticationAccount(), nameGame);
         return new ResponseEntity<>(gameResponseDto, HttpStatus.OK);
@@ -87,7 +95,7 @@ public class GameController {
 
     @GetMapping("/all")
     @ApiOperation("Get all games")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasPermission('ROLE_ADMIN', authentication.principal.authorities)")
     public ResponseEntity<PagesDtoResponse<Object>> getAllAccounts
             (@RequestParam(defaultValue = "5") int size,
              @RequestParam(defaultValue = "0") int page,
@@ -101,6 +109,4 @@ public class GameController {
                 .build());
         return new ResponseEntity<>(allGames, HttpStatus.OK);
     }
-
-
 }

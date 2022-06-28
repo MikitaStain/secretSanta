@@ -34,7 +34,10 @@ public class SetMessages {
         Document delete = new Document()
                 .append(TEXT_MESSAGE, TypeMessage.DELETE.getTextMessage())
                 .append(TYPE_MESSAGE, TypeMessage.DELETE.name());
-        messages.insertMany(List.of(created, changed,delete));
+        Document distribution = new Document()
+                .append(TEXT_MESSAGE, TypeMessage.DISTRIBUTION.getTextMessage())
+                .append(TYPE_MESSAGE, TypeMessage.DISTRIBUTION.name());
+        messages.insertMany(List.of(created, changed, delete, distribution));
     }
 
     @RollbackExecution

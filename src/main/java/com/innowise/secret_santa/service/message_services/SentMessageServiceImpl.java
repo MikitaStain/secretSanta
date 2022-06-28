@@ -7,10 +7,12 @@ import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.util.CalendarUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
+@Transactional
 public class SentMessageServiceImpl implements SentMessagesService {
 
     private final SentMessageMapper sentMessageMapper;

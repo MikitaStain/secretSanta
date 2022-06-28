@@ -11,6 +11,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,5 +47,15 @@ public class AuthenticationController {
                                 )
                 );
         return ResponseEntity.ok().headers(responseHeader).body(HttpStatus.OK);
+    }
+
+    @GetMapping("/logout")
+    @ApiOperation("Logout")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<HttpStatus> logout() {
+
+        SecurityContextHolder.clearContext();
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

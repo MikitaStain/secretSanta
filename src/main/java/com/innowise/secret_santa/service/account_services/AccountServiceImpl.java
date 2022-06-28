@@ -21,6 +21,7 @@ import com.innowise.secret_santa.repository.RoleRepository;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.message_services.SystemMessageService;
 import com.innowise.secret_santa.service.page_services.PageService;
+import com.innowise.secret_santa.util.CalendarUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -100,7 +101,7 @@ public class AccountServiceImpl implements AccountService,
     }
 
     private Account setDateCreated(Account account) {
-        account.setDateCreated(LocalDateTime.now());
+        account.setDateCreated(CalendarUtils.getFormatDate(LocalDateTime.now()));
         return account;
     }
 

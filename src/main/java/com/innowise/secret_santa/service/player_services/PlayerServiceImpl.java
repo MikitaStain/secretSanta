@@ -4,29 +4,34 @@ import com.innowise.secret_santa.exception.MapperException;
 import com.innowise.secret_santa.exception.NoAccessException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.mapper.PlayerMapper;
+import com.innowise.secret_santa.model.StatusGame;
+import com.innowise.secret_santa.model.TypeGame;
+import com.innowise.secret_santa.model.dto.request_dto.GameRegistration;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.request_dto.PlayerRequestDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.dto.response_dto.PlayerResponseDto;
 import com.innowise.secret_santa.model.postgres.Game;
 import com.innowise.secret_santa.model.postgres.Player;
-import com.innowise.secret_santa.model.postgres.Profile;
 import com.innowise.secret_santa.repository.PlayerRepository;
 import com.innowise.secret_santa.service.game_service.GamePlayerService;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.page_services.PageService;
 import com.innowise.secret_santa.service.profile_services.ProfileGamePlayerService;
+import com.innowise.secret_santa.util.CalendarUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class PlayerServiceImpl implements PlayerService {
 
     private final PlayerRepository playerRepository;
@@ -53,10 +58,10 @@ public class PlayerServiceImpl implements PlayerService {
 
     @Override
     @Transactional
-    public void registrationInGame(String nameGame, PlayerRequestDto playerRequestDto, Long idAccount) {
+    public void registrationInGame(GameRegistration gameRegistration, PlayerRequestDto playerRequestDto, Long idAccount) {
         Optional.ofNullable(playerRequestDto)
                 .map(playerMapper::toPlayer)
-                .map(player -> setGameInPlayer(nameGame, player))
+                .map(player -> setGameInPlayer(gameRegistration, player))
                 .map(player -> setProfileInPlayer(idAccount, player))
                 .map(this::setDateCreated)
                 .map(playerRepository::save)
@@ -64,11 +69,31 @@ public class PlayerServiceImpl implements PlayerService {
                         , idAccount));
     }
 
-    private Player setGameInPlayer(String gameName, Player player) {
-        player.setGame(Optional.ofNullable(gameName)
+    private Player setGameInPlayer(GameRegistration gameRegistration, Player player) {
+        player.setGame(Optional.ofNullable(gameRegistration.getNameGame())
                 .map(gamePlayerService::getGameByName)
-                .orElseThrow(() -> new NoDataFoundException("Game by name: " + gameName + " not found")));
+                .map(this::checkDateGame)
+                .map(game -> checkPassword(gameRegistration.getPassword(), game))
+                .orElseThrow(() -> new NoDataFoundException("Game by name: " + gameRegistration.getNameGame() + " not found")));
         return player;
+    }
+
+    private Game checkDateGame(Game game) {
+        if (game.getStatusGame().equals(StatusGame.FINISH)) {
+            throw new NoAccessException("Game with name: " + game.getNameGame() + " finishes");
+        }
+        return game;
+    }
+
+    private Game checkPassword(String password, Game game) {
+
+        if (game.getTypeGame().equals(TypeGame.CLOSED)) {
+            if (!password.isBlank() && game.getPassword().equals(password)) {
+                return game;
+            }
+            throw new NoAccessException("You have to enter correct password for participation in the game");
+        }
+        return game;
     }
 
     private Player setProfileInPlayer(Long idAccount, Player player) {
@@ -79,7 +104,7 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     private Player setDateCreated(Player player) {
-        player.setTimeRegistration(LocalDateTime.now());
+        player.setTimeRegistration(CalendarUtils.getFormatDate(LocalDateTime.now()));
         return player;
     }
 
@@ -98,23 +123,24 @@ public class PlayerServiceImpl implements PlayerService {
         Player player = Optional.ofNullable(nameGame)
                 .map(gamePlayerService::getGameByName)
                 .map(Game::getPlayers)
-                .map(players -> compareTo(idAccount, players))
+                .map(players -> checkAvailabilityPlayer(idAccount, players))
                 .orElseThrow(() -> new NoDataFoundException("You don't have game with name: " + nameGame));
-        playerRepository.delete(player);
+
+        Optional.ofNullable(player)
+                .ifPresent(playerRepository::delete);
         loggerService.loggerInfo("Account by id: {0} deleted from game: {1}", idAccount, nameGame);
     }
 
-    private Player compareTo(Long accountId, List<Player> playersGame) {
+    private Player checkAvailabilityPlayer(Long accountId, List<Player> playersGame) {
 
-        List<Player> players = profileGamePlayerService.getProfileByAccountId(accountId).getPlayers();
-        if (players == null) {
-            throw new NoDataFoundException("You don't participate in this game");
+        List<Player> playersAccount = profileGamePlayerService.getProfileByAccountId(accountId).getPlayers();
+        if (playersAccount.isEmpty()) {
+            throw new NoDataFoundException("You don't play games");
         }
-        players.retainAll(playersGame);
-        return Optional.of(players)
+        playersAccount.retainAll(playersGame);
+        return Optional.of(playersAccount)
                 .flatMap(listPlayer -> listPlayer.stream().findAny())
                 .orElseThrow(() -> new NoDataFoundException("You don't participate in this game"));
-
     }
 
     @Override
@@ -130,14 +156,26 @@ public class PlayerServiceImpl implements PlayerService {
 
     @Override
     @Transactional
-    public PlayerResponseDto changePlayer(PlayerRequestDto playerRequestDto, Long idAccount) {
-        return Optional.ofNullable(idAccount)
-                .map(playerRepository::findPlayerByProfileAccountId)
+    public PlayerResponseDto changePlayer(PlayerRequestDto playerRequestDto, Long idAccount, String nameGame) {
+
+        List<Player> players = Optional.ofNullable(playerRepository.findPlayerByProfileAccountId(idAccount))
+                .orElseThrow(() -> new NoDataFoundException("You don't play games"));
+
+        return Optional.of(findPlayerByNameGame(players, nameGame))
                 .map(player -> changeDataPlayer(player, playerRequestDto))
                 .map(playerRepository::save)
                 .map(playerMapper::toPlayerResponseDto)
-                .orElseThrow(() -> new MapperException("Error update player"));
+                .orElseThrow(() -> new MapperException("Data change error"));
+    }
 
+    private Player findPlayerByNameGame(List<Player> players, String nameGame) {
+
+        for (Player player : players) {
+            if (player.getGame().getNameGame().equals(nameGame)) {
+                return player;
+            }
+        }
+        throw new NoAccessException("You don't play in game: " + nameGame);
     }
 
     private Player changeDataPlayer(Player player, PlayerRequestDto playerRequestDto) {
@@ -157,11 +195,13 @@ public class PlayerServiceImpl implements PlayerService {
     public List<PlayerResponseDto> getAllPlayersFromGame(String nameGame, Long idAuthenticationAccount) {
 
         Game gameByName = gamePlayerService.getGameByName(nameGame);
-        Profile organizer = gameByName.getOrganizer();
-        Profile profileByAccountId = profileGamePlayerService.getProfileByAccountId(idAuthenticationAccount);
-        if (!organizer.getId().equals(profileByAccountId.getId())) {
-            throw new NoAccessException("Account by id: " + idAuthenticationAccount + " doesn't have permission");
-        }
+
+        checkOrganizer
+                (
+                        gameByName.getOrganizer().getId(),
+                        profileGamePlayerService.getProfileByAccountId(idAuthenticationAccount).getId()
+                );
+
         return Optional.of(gameByName)
                 .map(Game::getPlayers)
                 .map(players -> players
@@ -169,5 +209,25 @@ public class PlayerServiceImpl implements PlayerService {
                         .map(playerMapper::toPlayerResponseDto)
                         .collect(Collectors.toList()))
                 .orElseThrow(() -> new NoDataFoundException("Game: " + nameGame + " doesn't have players"));
+    }
+
+    private void checkOrganizer(Long organizerId, Long currentProfileId) {
+        if (!organizerId.equals(currentProfileId)) {
+            throw new NoAccessException(" Your account doesn't have permission");
+        }
+    }
+
+    @Override
+    public List<PlayerResponseDto> getCurrentPlayers(Long idAccount) {
+
+        List<Player> players = playerRepository.findPlayerByProfileAccountId(idAccount);
+        List<PlayerResponseDto> playersDto = new ArrayList<>();
+        if (players.isEmpty()) {
+            throw new NoDataFoundException("You don't play games");
+        }
+        for (Player player : players) {
+            playersDto.add(playerMapper.toPlayerResponseDto(player));
+        }
+        return playersDto;
     }
 }

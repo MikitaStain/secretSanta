@@ -5,6 +5,8 @@ import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.mapper.GameMapper;
 import com.innowise.secret_santa.model.RoleEnum;
 import com.innowise.secret_santa.model.SettingRolesEnum;
+import com.innowise.secret_santa.model.StatusGame;
+import com.innowise.secret_santa.model.TypeGame;
 import com.innowise.secret_santa.model.dto.request_dto.GameRequestDto;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.response_dto.GameResponseDto;
@@ -14,8 +16,10 @@ import com.innowise.secret_santa.model.postgres.Profile;
 import com.innowise.secret_santa.repository.GameRepository;
 import com.innowise.secret_santa.repository.specification.GameSpecification;
 import com.innowise.secret_santa.service.account_services.AccountGameService;
+import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.page_services.PageService;
 import com.innowise.secret_santa.service.profile_services.ProfileGamePlayerService;
+import com.innowise.secret_santa.util.CalendarUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -27,25 +31,30 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class GameServiceImpl implements GameService,
-        GamePlayerService {
+        GamePlayerService,
+        GameDistributionService {
     private final GameRepository gameRepository;
     private final GameMapper gameMapper;
     private final ProfileGamePlayerService profileGameService;
     private final AccountGameService accountGameService;
     private final PageService<GameResponseDto> pageService;
+    private final LoggerService<Long> logger;
 
     @Autowired
     public GameServiceImpl(GameRepository gameRepository,
                            GameMapper gameMapper,
                            ProfileGamePlayerService profileGameService,
                            AccountGameService accountGameService,
-                           PageService<GameResponseDto> pageService) {
+                           PageService<GameResponseDto> pageService,
+                           LoggerService<Long> logger) {
         this.gameRepository = gameRepository;
         this.gameMapper = gameMapper;
         this.profileGameService = profileGameService;
         this.accountGameService = accountGameService;
         this.pageService = pageService;
+        this.logger = logger;
     }
 
     @Override
@@ -55,15 +64,32 @@ public class GameServiceImpl implements GameService,
                 .map(gameMapper::toGameFromGameRequestDto)
                 .map(this::setTimeCreateToGame)
                 .map(item -> setOrganizerToGame(item, idAccount))
+                .map(this::setTypeGame)
+                .map(this::setStatusGame)
                 .map(gameRepository::save)
                 .map(gameMapper::toGameResponseDto)
                 .orElseThrow(() -> new MapperException("Error while created game, please to retry"));
     }
 
     private Game setTimeCreateToGame(Game game) {
-        game.setTimeCreated(LocalDateTime.now());
+        game.setTimeCreated(CalendarUtils.getFormatDate(LocalDateTime.now()));
         return game;
     }
+
+    private Game setTypeGame(Game game) {
+        if (game.getPassword().isBlank()) {
+            game.setTypeGame(TypeGame.OPEN);
+            return game;
+        }
+        game.setTypeGame(TypeGame.CLOSED);
+        return game;
+    }
+
+    private Game setStatusGame(Game game) {
+        game.setStatusGame(StatusGame.START);
+        return game;
+    }
+
 
     private Game setOrganizerToGame(Game game, Long idAccount) {
         Profile organizer = Optional.ofNullable(idAccount)
@@ -181,5 +207,32 @@ public class GameServiceImpl implements GameService,
                 .map(id -> gameRepository.findAll(GameSpecification.likeAccountId(idAccount)))
                 .map(games -> games.stream().map(gameMapper::toGameResponseDto).collect(Collectors.toList()))
                 .orElseThrow(() -> new NoDataFoundException("For account by id: " + idAccount + " games not found"));
+    }
+
+    @Override
+    public List<Game> getAllGamesAfterCurrentDate() {
+
+        return Optional.ofNullable(gameRepository
+                        .findAllByStatusGameAndTimeEndBefore(StatusGame.START, LocalDateTime.now()))
+                .orElseThrow(() -> new NoDataFoundException("No games with suitable parameters"));
+    }
+
+    @Override
+    public void changeStatusGameInFinish(Game game) {
+
+        Game updateGame = Optional.ofNullable(game)
+                .map(this::setStatusGameFinish)
+                .map(gameRepository::save)
+                .orElseThrow(() -> new MapperException("Don't update status"));
+
+        if (updateGame != null) {
+            logger.loggerInfo("Game with name: {}, update status successful", game.getNameGame());
+        }
+
+    }
+
+    private Game setStatusGameFinish(Game game) {
+        game.setStatusGame(StatusGame.FINISH);
+        return game;
     }
 }

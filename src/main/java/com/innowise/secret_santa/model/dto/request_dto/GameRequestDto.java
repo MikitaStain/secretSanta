@@ -26,4 +26,6 @@ public class GameRequestDto {
     private String description;
 
     private String nameGame;
+
+    private String password;
 }

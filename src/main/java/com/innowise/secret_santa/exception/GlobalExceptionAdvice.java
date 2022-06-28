@@ -84,4 +84,15 @@ public class GlobalExceptionAdvice {
 
         return new ResponseEntity<>(errorObject, HttpStatus.FORBIDDEN);
     }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorObject> handleAuthorizationException(UnauthorizedException ex) {
+        ErrorObject errorObject = new ErrorObject();
+        errorObject.setStatusCode(HttpStatus.UNAUTHORIZED.value());
+        errorObject.setMessage(ex.getMessage());
+        errorObject.setTimestamp(CalendarUtils.
+                convertMilliSecondsToFormattedDate(System.currentTimeMillis()));
+
+        return new ResponseEntity<>(errorObject, HttpStatus.UNAUTHORIZED);
+    }
 }
