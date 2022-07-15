@@ -4,6 +4,8 @@ import com.innowise.secret_santa.exception.MapperException;
 import com.innowise.secret_santa.exception.NoAccessException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.mapper.PlayerMapper;
+import com.innowise.secret_santa.model.RoleEnum;
+import com.innowise.secret_santa.model.SettingRolesEnum;
 import com.innowise.secret_santa.model.StatusGame;
 import com.innowise.secret_santa.model.TypeGame;
 import com.innowise.secret_santa.model.dto.request_dto.GameRegistration;
@@ -14,6 +16,7 @@ import com.innowise.secret_santa.model.dto.response_dto.PlayerResponseDto;
 import com.innowise.secret_santa.model.postgres.Game;
 import com.innowise.secret_santa.model.postgres.Player;
 import com.innowise.secret_santa.repository.PlayerRepository;
+import com.innowise.secret_santa.service.account_services.AccountRoleService;
 import com.innowise.secret_santa.service.game_service.GamePlayerService;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.page_services.PageService;
@@ -40,6 +43,7 @@ public class PlayerServiceImpl implements PlayerService {
     private final ProfileGamePlayerService profileGamePlayerService;
     private final PageService<PlayerResponseDto> pageService;
     private final LoggerService<Long> loggerService;
+    private final AccountRoleService accountRoleService;
 
     @Autowired
     public PlayerServiceImpl(PlayerRepository playerRepository,
@@ -47,26 +51,41 @@ public class PlayerServiceImpl implements PlayerService {
                              PlayerMapper playerMapper,
                              ProfileGamePlayerService profileGamePlayerService,
                              PageService<PlayerResponseDto> pageService,
-                             LoggerService<Long> loggerService) {
+                             LoggerService<Long> loggerService,
+                             AccountRoleService accountRoleService) {
         this.playerRepository = playerRepository;
         this.gamePlayerService = gamePlayerService;
         this.playerMapper = playerMapper;
         this.profileGamePlayerService = profileGamePlayerService;
         this.pageService = pageService;
         this.loggerService = loggerService;
+        this.accountRoleService = accountRoleService;
     }
 
     @Override
     @Transactional
-    public void registrationInGame(GameRegistration gameRegistration, PlayerRequestDto playerRequestDto, Long idAccount) {
+    public void savePlayer(GameRegistration gameRegistration, PlayerRequestDto playerRequestDto, Long idAccount) {
         Optional.ofNullable(playerRequestDto)
                 .map(playerMapper::toPlayer)
                 .map(player -> setGameInPlayer(gameRegistration, player))
                 .map(player -> setProfileInPlayer(idAccount, player))
+                .map(player -> checkAndAddSetPlayerRole(player, idAccount))
                 .map(this::setDateCreated)
                 .map(playerRepository::save)
                 .ifPresent(player -> loggerService.logger("Account by id: {}, created player"
                         , idAccount));
+    }
+
+    private Player checkAndAddSetPlayerRole(Player player, Long idAccount) {
+        if (player.getProfile()
+                .getAccount()
+                .getRole()
+                .stream()
+                .anyMatch(role -> role.getRoleName().equals(RoleEnum.ROLE_PLAYER))) {
+            return player;
+        }
+        accountRoleService.addOrDeleteRoleToAccount(idAccount, RoleEnum.ROLE_PLAYER, SettingRolesEnum.ADD);
+        return player;
     }
 
     private Player setGameInPlayer(GameRegistration gameRegistration, Player player) {
@@ -128,7 +147,16 @@ public class PlayerServiceImpl implements PlayerService {
 
         Optional.ofNullable(player)
                 .ifPresent(playerRepository::delete);
+        deleteRolePlayer(idAccount);
         loggerService.loggerInfo("Account by id: {0} deleted from game: {1}", idAccount, nameGame);
+    }
+
+    private void deleteRolePlayer(Long accountId) {
+
+        List<Player> allByProfileAccountId = playerRepository.findAllByProfileAccountId(accountId);
+        if (allByProfileAccountId.isEmpty()) {
+            accountRoleService.addOrDeleteRoleToAccount(accountId, RoleEnum.ROLE_PLAYER, SettingRolesEnum.DELETE);
+        }
     }
 
     private Player checkAvailabilityPlayer(Long accountId, List<Player> playersGame) {
@@ -158,7 +186,7 @@ public class PlayerServiceImpl implements PlayerService {
     @Transactional
     public PlayerResponseDto changePlayer(PlayerRequestDto playerRequestDto, Long idAccount, String nameGame) {
 
-        List<Player> players = Optional.ofNullable(playerRepository.findPlayerByProfileAccountId(idAccount))
+        List<Player> players = Optional.ofNullable(playerRepository.findAllByProfileAccountId(idAccount))
                 .orElseThrow(() -> new NoDataFoundException("You don't play games"));
 
         return Optional.of(findPlayerByNameGame(players, nameGame))
@@ -220,7 +248,7 @@ public class PlayerServiceImpl implements PlayerService {
     @Override
     public List<PlayerResponseDto> getCurrentPlayers(Long idAccount) {
 
-        List<Player> players = playerRepository.findPlayerByProfileAccountId(idAccount);
+        List<Player> players = playerRepository.findAllByProfileAccountId(idAccount);
         List<PlayerResponseDto> playersDto = new ArrayList<>();
         if (players.isEmpty()) {
             throw new NoDataFoundException("You don't play games");

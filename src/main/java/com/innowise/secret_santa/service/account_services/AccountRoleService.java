@@ -3,7 +3,7 @@ package com.innowise.secret_santa.service.account_services;
 import com.innowise.secret_santa.model.RoleEnum;
 import com.innowise.secret_santa.model.SettingRolesEnum;
 
-public interface AccountGameService {
+public interface AccountRoleService {
 
-    void setRoleToAccount(Long id, RoleEnum roleEnum, SettingRolesEnum settingRolesEnum);
+    void addOrDeleteRoleToAccount(Long id, RoleEnum roleEnum, SettingRolesEnum settingRolesEnum);
 }

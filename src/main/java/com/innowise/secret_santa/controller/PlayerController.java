@@ -46,7 +46,7 @@ public class PlayerController {
 
         ValidationParameter.checkParameterIsEmpty(gameRegistration.getNameGame());
 
-        playerService.registrationInGame(gameRegistration,
+        playerService.savePlayer(gameRegistration,
                 player,
                 HandleAuthorities.getIdAuthenticationAccount());
 

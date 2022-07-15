@@ -2,7 +2,6 @@ package com.innowise.secret_santa.model.postgres;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,19 +35,16 @@ public class Distribution {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "player_sender")
     private Player senderPlayer;
 
-    @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "player_target")
     private Player targetPlayer;
 
-    @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_game")

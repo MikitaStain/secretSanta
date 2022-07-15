@@ -1,5 +1,6 @@
 package com.innowise.secret_santa.service.game_service;
 
+import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.exception.MapperException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.mapper.GameMapper;
@@ -15,7 +16,7 @@ import com.innowise.secret_santa.model.postgres.Game;
 import com.innowise.secret_santa.model.postgres.Profile;
 import com.innowise.secret_santa.repository.GameRepository;
 import com.innowise.secret_santa.repository.specification.GameSpecification;
-import com.innowise.secret_santa.service.account_services.AccountGameService;
+import com.innowise.secret_santa.service.account_services.AccountRoleService;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.page_services.PageService;
 import com.innowise.secret_santa.service.profile_services.ProfileGamePlayerService;
@@ -38,7 +39,7 @@ public class GameServiceImpl implements GameService,
     private final GameRepository gameRepository;
     private final GameMapper gameMapper;
     private final ProfileGamePlayerService profileGameService;
-    private final AccountGameService accountGameService;
+    private final AccountRoleService accountGameService;
     private final PageService<GameResponseDto> pageService;
     private final LoggerService<Long> logger;
 
@@ -46,7 +47,7 @@ public class GameServiceImpl implements GameService,
     public GameServiceImpl(GameRepository gameRepository,
                            GameMapper gameMapper,
                            ProfileGamePlayerService profileGameService,
-                           AccountGameService accountGameService,
+                           AccountRoleService accountGameService,
                            PageService<GameResponseDto> pageService,
                            LoggerService<Long> logger) {
         this.gameRepository = gameRepository;
@@ -60,7 +61,9 @@ public class GameServiceImpl implements GameService,
     @Override
     @Transactional
     public GameResponseDto createGame(GameRequestDto game, Long idAccount) {
-        return Optional.ofNullable(game)
+        checkInUniqueNameGame(game.getNameGame());
+
+        return Optional.of(game)
                 .map(gameMapper::toGameFromGameRequestDto)
                 .map(this::setTimeCreateToGame)
                 .map(item -> setOrganizerToGame(item, idAccount))
@@ -69,6 +72,12 @@ public class GameServiceImpl implements GameService,
                 .map(gameRepository::save)
                 .map(gameMapper::toGameResponseDto)
                 .orElseThrow(() -> new MapperException("Error while created game, please to retry"));
+    }
+
+    private void checkInUniqueNameGame(String nameGame){
+        if (gameRepository.existsByNameGame(nameGame)){
+            throw new IncorrectDataException("Game with name: " + nameGame+ " already exists");
+        }
     }
 
     private Game setTimeCreateToGame(Game game) {
@@ -111,7 +120,7 @@ public class GameServiceImpl implements GameService,
     }
 
     private void setOrganizerRoleForAccount(Long idAccount) {
-        accountGameService.setRoleToAccount(idAccount, RoleEnum.ROLE_ORGANIZER, SettingRolesEnum.ADD);
+        accountGameService.addOrDeleteRoleToAccount(idAccount, RoleEnum.ROLE_ORGANIZER, SettingRolesEnum.ADD);
     }
 
 
@@ -136,7 +145,7 @@ public class GameServiceImpl implements GameService,
                 .orElseThrow(() -> new NoDataFoundException("Current account isn't organizer"));
 
         if (allByOrganizerAccountId.size() == 1) {
-            accountGameService.setRoleToAccount(idAccount, RoleEnum.ROLE_ORGANIZER, SettingRolesEnum.DELETE);
+            accountGameService.addOrDeleteRoleToAccount(idAccount, RoleEnum.ROLE_ORGANIZER, SettingRolesEnum.DELETE);
         }
         gameRepository.delete(game);
     }

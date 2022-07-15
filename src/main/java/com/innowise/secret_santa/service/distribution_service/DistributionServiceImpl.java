@@ -1,7 +1,11 @@
 package com.innowise.secret_santa.service.distribution_service;
 
 import com.innowise.secret_santa.exception.NoDataFoundException;
+import com.innowise.secret_santa.mapper.DistributionMapper;
 import com.innowise.secret_santa.model.TypeMessage;
+import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
+import com.innowise.secret_santa.model.dto.response_dto.DistributionResponseDto;
+import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.postgres.Distribution;
 import com.innowise.secret_santa.model.postgres.Game;
 import com.innowise.secret_santa.model.postgres.Player;
@@ -9,7 +13,10 @@ import com.innowise.secret_santa.repository.DistributionRepository;
 import com.innowise.secret_santa.service.game_service.GameDistributionService;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.message_services.SystemMessageService;
+import com.innowise.secret_santa.service.page_services.PageService;
 import com.innowise.secret_santa.util.CalendarUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,30 +25,36 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
-@Transactional
 public class DistributionServiceImpl implements DistributionService {
 
     private final GameDistributionService gameDistributionService;
     private final DistributionRepository distributionRepository;
     private final SystemMessageService sentMessagesService;
-
     private final LoggerService<Long> loggerService;
+    private final DistributionMapper distributionMapper;
+    private final PageService<DistributionResponseDto> pageService;
 
-
+    @Autowired
     public DistributionServiceImpl(GameDistributionService gameDistributionService,
                                    DistributionRepository distributionRepository,
                                    SystemMessageService sentMessagesService,
-                                   LoggerService<Long> loggerService) {
+                                   LoggerService<Long> loggerService,
+                                   DistributionMapper distributionMapper,
+                                   PageService<DistributionResponseDto> pageService) {
         this.gameDistributionService = gameDistributionService;
         this.distributionRepository = distributionRepository;
         this.sentMessagesService = sentMessagesService;
         this.loggerService = loggerService;
+        this.distributionMapper = distributionMapper;
+        this.pageService = pageService;
     }
 
 
     @Scheduled(fixedRate = 60000)
+    @Transactional
     public void createDistributions() {
         List<Game> allGamesAfterCurrentDate = gameDistributionService.getAllGamesAfterCurrentDate();
         for (Game game : allGamesAfterCurrentDate) {
@@ -53,12 +66,7 @@ public class DistributionServiceImpl implements DistributionService {
 
     private List<Distribution> distribution(Game game) {
 
-        List<Player> players = game.getPlayers();
-
-        if (players.isEmpty() || players.size() == 1) {
-            throw new NoDataFoundException("Not enough players in the game: " + game.getNameGame());
-        }
-
+        List<Player> players = getPlayersFromGame(game);
         Collections.shuffle(players);
         List<Distribution> distributions = new ArrayList<>();
 
@@ -72,6 +80,14 @@ public class DistributionServiceImpl implements DistributionService {
             }
         }
         return distributions;
+    }
+
+    private List<Player> getPlayersFromGame(Game game) {
+        List<Player> players = game.getPlayers();
+        if (players.isEmpty()) {
+            throw new NoDataFoundException("Not enough players in the game: " + game.getNameGame());
+        }
+        return players;
     }
 
     private Distribution buildDistribution(Player from, Player to, Game game) {
@@ -93,5 +109,71 @@ public class DistributionServiceImpl implements DistributionService {
 
         loggerService.loggerInfo("Account by email {}, get email about your player",
                 fromGift.getProfile().getAccount().getEmail());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DistributionResponseDto> getDistributionsForCurrentAccount(Long accountId) {
+        loggerService.loggerInfo("Account by id: {} look your distributions", accountId);
+
+        return Optional.of(accountId)
+                .map(distributionRepository::findAllBySenderPlayerProfileAccountId)
+                .map(this::mapDistributionsToDistributionResponseDto)
+                .orElseThrow(() -> new NoDataFoundException("Don't have distributions"));
+    }
+
+    private List<DistributionResponseDto> mapDistributionsToDistributionResponseDto(List<Distribution> distributions) {
+
+        if (distributions.isEmpty()) {
+            throw new NoDataFoundException("Don't find distribution for current account");
+        }
+        List<DistributionResponseDto> distributionsResponseDto = new ArrayList<>();
+        for (Distribution distribution : distributions) {
+            distributionsResponseDto.add(distributionMapper.toDistributionResponseDto(distribution));
+        }
+        return distributionsResponseDto;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DistributionResponseDto getDistributionCurrentAccountByNameGame(Long accountId, String nameGame) {
+        loggerService.loggerInfo("Account by id: {0} look your distributions for game: {1}"
+                , accountId, nameGame);
+
+        return Optional.ofNullable(distributionRepository
+                        .findDistributionByGameNameGameAndSenderPlayerProfileAccountId(nameGame, accountId))
+                .map(distributionMapper::toDistributionResponseDto)
+                .orElseThrow(
+                        () -> new NoDataFoundException("For current account not distributions for game: " + nameGame));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DistributionResponseDto> getAllDistributionForOrganizerByNameGame(Long idAccount, String gameName) {
+
+        List<DistributionResponseDto> distributionsResponseDto =
+                Optional.of(distributionRepository.findAllByGameNameGameAndGameOrganizerAccountId(gameName, idAccount))
+                        .map(this::mapDistributionsToDistributionResponseDto)
+                        .orElseThrow();
+
+        if (distributionsResponseDto.isEmpty()) {
+            throw new NoDataFoundException
+                    ("You aren't organizer for game: " + gameName + " or in game don't have enough players");
+        }
+        loggerService.loggerInfo("Account by id: {0}, get all distributions for game: {1}"
+                , idAccount, gameName);
+        return distributionsResponseDto;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagesDtoResponse<Object> getAllDistributions(PagesDto pages) {
+        Page<DistributionResponseDto> listDistributions = distributionRepository.findAll(pageService.getPage(pages))
+                .map(distributionMapper::toDistributionResponseDto);
+        if (listDistributions.isEmpty()) {
+            throw new NoDataFoundException("Distributions not found");
+        }
+        loggerService.loggerInfo("Use method getAllDistributions");
+        return pageService.getPagesDtoResponse(pages, listDistributions.getContent());
     }
 }

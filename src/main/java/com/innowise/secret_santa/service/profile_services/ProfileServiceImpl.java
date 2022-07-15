@@ -143,7 +143,6 @@ public class ProfileServiceImpl implements ProfileService, ProfileGamePlayerServ
         }
         Address address = changeAddressData(oldProfileData.getAddress(), newProfileData.getAddress());
         oldProfileData.setAddress(address);
-        profileRepository.save(oldProfileData);
 
         return oldProfileData;
     }

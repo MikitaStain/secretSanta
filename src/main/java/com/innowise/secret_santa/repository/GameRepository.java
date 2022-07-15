@@ -18,4 +18,5 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
 
     List<Game> findAllByStatusGameAndTimeEndBefore(StatusGame statusGame, LocalDateTime after);
 
+    boolean existsByNameGame(String name);
 }

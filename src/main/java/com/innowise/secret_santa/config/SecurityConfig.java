@@ -15,6 +15,20 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+
+    private static final String[] SWAGGER_ENDPOINT = {
+            "/v2/api-docs",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/spring-security-oauth-resource/**",
+            "/test"
+    };
     private final JwtToken jwtToken;
 
     public SecurityConfig(JwtToken jwtToken) {
@@ -29,17 +43,7 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/v2/api-docs",
-                        "/swagger-resources",
-                        "/swagger-resources/**",
-                        "/configuration/ui",
-                        "/configuration/security",
-                        "/swagger-ui.html",
-                        "/webjars/**",
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/spring-security-oauth-resource/**",
-                        "/test").permitAll()
+                .antMatchers(SWAGGER_ENDPOINT).permitAll()
                 .and()
                 .apply(new JwtConfigurer(jwtToken))
                 .and().build();

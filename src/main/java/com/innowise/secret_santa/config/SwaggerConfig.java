@@ -24,7 +24,6 @@ public class SwaggerConfig implements WebMvcConfigurer {
 
     private static final String AUTHORIZATION = "Authorization";
 
-
     @Bean
     public Docket api() {
 

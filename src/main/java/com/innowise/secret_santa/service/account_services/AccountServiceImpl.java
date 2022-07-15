@@ -17,14 +17,14 @@ import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.postgres.Account;
 import com.innowise.secret_santa.model.postgres.Role;
 import com.innowise.secret_santa.repository.AccountRepository;
-import com.innowise.secret_santa.repository.RoleRepository;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.message_services.SystemMessageService;
 import com.innowise.secret_santa.service.page_services.PageService;
+import com.innowise.secret_santa.service.password_service.PasswordService;
+import com.innowise.secret_santa.service.role_service.RoleService;
 import com.innowise.secret_santa.util.CalendarUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,32 +39,32 @@ public class AccountServiceImpl implements AccountService,
         AccountProfileService,
         AccountEncodingService,
         AccountRegistrationService,
-        AccountGameService {
+        AccountRoleService {
 
     private final AccountRepository accountRepository;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private final AccountMapper accountMapper;
-    private final PasswordEncoder encoder;
     private final PageService<AccountDto> pageService;
-    private final LoggerService<?> logger;
+    private final LoggerService<Long> logger;
     private final SystemMessageService messageService;
+    private final PasswordService passwordService;
 
 
     @Autowired
     public AccountServiceImpl(AccountRepository accountRepository,
-                              RoleRepository roleRepository,
+                              RoleService roleService,
                               AccountMapper accountMapper,
-                              PasswordEncoder encoder,
                               PageService<AccountDto> pageService,
-                              LoggerService<?> logger,
-                              SystemMessageService messageService) {
+                              LoggerService<Long> logger,
+                              SystemMessageService messageService,
+                              PasswordService passwordService) {
         this.accountRepository = accountRepository;
-        this.roleRepository = roleRepository;
+        this.roleService = roleService;
         this.accountMapper = accountMapper;
-        this.encoder = encoder;
         this.pageService = pageService;
         this.logger = logger;
         this.messageService = messageService;
+        this.passwordService = passwordService;
     }
 
     @Override
@@ -74,19 +74,14 @@ public class AccountServiceImpl implements AccountService,
         checkEmail(account.getEmail());
         Account present = Optional.of(account)
                 .map(accountMapper::toAccount)
-                .map(this::encodingPassword)
-                .map(this::setRoleForAccount)
-                .map(this::setDateCreated)
+                .map(this::encodePasswordInAccount)
+                .map(this::addRoleForAccount)
+                .map(this::addDateCreatedForAccount)
                 .map(accountRepository::save)
                 .orElseThrow(() -> new SaveDataException("failed to created Account"));
 
         messageService.messageService(TypeMessage.CREATE, present.getId(), present.getEmail());
         logger.loggerInfo("Account by email {} successful registration", present.getEmail());
-    }
-
-    private Account encodingPassword(Account account) {
-        account.setPassword(encoder.encode(account.getPassword()));
-        return account;
     }
 
     private void checkEmail(String email) {
@@ -95,12 +90,17 @@ public class AccountServiceImpl implements AccountService,
         }
     }
 
-    private Account setRoleForAccount(Account account) {
-        account.setRole(List.of(roleRepository.findRoleByRoleName(RoleEnum.ROLE_USER)));
+    private Account encodePasswordInAccount(Account account) {
+        account.setPassword(passwordService.encodePassword(account.getPassword()));
         return account;
     }
 
-    private Account setDateCreated(Account account) {
+    private Account addRoleForAccount(Account account) {
+        account.setRole(List.of(roleService.giveRoleByRoleName(RoleEnum.ROLE_USER)));
+        return account;
+    }
+
+    private Account addDateCreatedForAccount(Account account) {
         account.setDateCreated(CalendarUtils.getFormatDate(LocalDateTime.now()));
         return account;
     }
@@ -151,22 +151,15 @@ public class AccountServiceImpl implements AccountService,
 
         Account accountById = Optional.ofNullable(id)
                 .map(this::getAccountById)
-                .orElseThrow();
+                .orElseThrow(() -> new NoDataFoundException("Not found data for change password account"));
 
-        comparePasswords(account.getOldPassword(), accountById.getPassword());
+        passwordService.comparePasswords(account.getOldPassword(), accountById.getPassword());
         accountById.setPassword(account.getNewPassword());
-        accountRepository.save(encodingPassword(accountById));
+        accountRepository.save(encodePasswordInAccount(accountById));
         logger.loggerInfo("Account {} changed password", accountById.getEmail());
         messageService.messageService(TypeMessage.CHANGE_PASSWORD, accountById.getId(), accountById.getEmail());
 
         return accountMapper.toAccountDto(accountById);
-    }
-
-    @Override
-    public void comparePasswords(String currentPassword, String validPassword) {
-        if (!encoder.matches(currentPassword, validPassword)) {
-            throw new IncorrectDataException("Password incorrect, please write it again");
-        }
     }
 
     @Override
@@ -181,19 +174,19 @@ public class AccountServiceImpl implements AccountService,
     }
 
     @Override
-    public void setRoleToAccount(Long id, RoleEnum role, SettingRolesEnum flag) {
+    public void addOrDeleteRoleToAccount(Long id, RoleEnum role, SettingRolesEnum flag) {
 
         Account acc = Optional.ofNullable(id)
                 .map(this::getAccountById)
-                .map(account -> getAccountWithAddRoleOrDeleteRole(account, role, flag))
+                .map(account -> addRoleOrDeleteRoleForAccount(account, role, flag))
                 .map(accountRepository::save)
                 .orElseThrow(() -> new NoDataFoundException("Filed to change role for account by id: " + id));
 
-        logger.loggerInfo("Account by id {} set role - 'ROLE_ORGANIZER'", acc.getId());
+        logger.loggerInfo("Account by id {0} set role - {1}", acc.getId(), role.getRole());
 
     }
 
-    private Account getAccountWithAddRoleOrDeleteRole(Account account, RoleEnum roleEnum, SettingRolesEnum flag) {
+    private Account addRoleOrDeleteRoleForAccount(Account account, RoleEnum roleEnum, SettingRolesEnum flag) {
 
         List<Role> role = account.getRole();
 
@@ -201,7 +194,7 @@ public class AccountServiceImpl implements AccountService,
             addNewRoleToAccount(role, roleEnum);
         }
         if (flag.equals(SettingRolesEnum.DELETE)) {
-            deleteRoleFromAccount(role, roleEnum);
+            deleteOldRoleFromAccount(role, roleEnum);
         }
         account.setRole(role);
         return account;
@@ -209,11 +202,11 @@ public class AccountServiceImpl implements AccountService,
 
     private void addNewRoleToAccount(List<Role> roles, RoleEnum roleEnum) {
         if (roles.stream().noneMatch(role -> role.getRoleName().equals(roleEnum))) {
-            roles.add(roleRepository.findRoleByRoleName(roleEnum));
+            roles.add(roleService.giveRoleByRoleName(roleEnum));
         }
     }
 
-    private void deleteRoleFromAccount(List<Role> roles, RoleEnum roleEnum) {
-        roles.removeIf(next -> next.getRoleName().equals(roleEnum));
+    private void deleteOldRoleFromAccount(List<Role> roles, RoleEnum roleEnum) {
+        roles.removeIf(role -> role.getRoleName().equals(roleEnum));
     }
 }

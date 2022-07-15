@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface PlayerService {
 
-    void registrationInGame(GameRegistration gameRegistration, PlayerRequestDto playerRequestDto, Long idAccount);
+    void savePlayer(GameRegistration gameRegistration, PlayerRequestDto playerRequestDto, Long idAccount);
 
     PlayerResponseDto getPlayerById(Long id);
 
