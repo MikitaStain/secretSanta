@@ -34,7 +34,7 @@ import static com.innowise.secret_santa.constants.TestConstants.PAGES_DTO_RESPON
 import static com.innowise.secret_santa.constants.TestConstants.PAGE_ACCOUNT;
 import static com.innowise.secret_santa.constants.TestConstants.PASSWORD;
 import static com.innowise.secret_santa.constants.TestConstants.REGISTRATION_LOGIN_ACCOUNT;
-import static com.innowise.secret_santa.constants.TestConstants.ROLE;
+import static com.innowise.secret_santa.constants.TestConstants.ROLE_USER;
 import static com.innowise.secret_santa.constants.TestConstants.ROLE_ENUM_USER;
 import static com.innowise.secret_santa.constants.TestConstants.SETTING_ROLES_ENUM_ADD;
 import static com.innowise.secret_santa.constants.TestConstants.TYPE_MESSAGE_CHANGE;
@@ -72,7 +72,7 @@ class AccountServiceImplTest {
 
         given(accountRepository.existsByEmail(EMAIL)).willReturn(false);
         given(accountMapper.toAccount(REGISTRATION_LOGIN_ACCOUNT)).willReturn(ACCOUNT_WITH_PROFILE);
-        given(roleService.giveRoleByRoleName(ROLE_ENUM_USER)).willReturn(ROLE);
+        given(roleService.giveRoleByRoleName(ROLE_ENUM_USER)).willReturn(ROLE_USER);
         given(accountRepository.save(ACCOUNT_WITH_PROFILE)).willReturn(ACCOUNT_WITH_PROFILE);
         doNothing().when(messageService).messageService(TYPE_MESSAGE_CREATE, ID, EMAIL);
         doNothing().when(logger).loggerInfo(LOGGER_MESSAGE_CREATE_ACCOUNT, EMAIL);

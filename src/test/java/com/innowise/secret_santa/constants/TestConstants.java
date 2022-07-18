@@ -10,33 +10,32 @@ import com.innowise.secret_santa.model.dto.AddressDto;
 import com.innowise.secret_santa.model.dto.ProfileDto;
 import com.innowise.secret_santa.model.dto.RoleDto;
 import com.innowise.secret_santa.model.dto.request_dto.AccountChangePassword;
+import com.innowise.secret_santa.model.dto.request_dto.GameRegistration;
 import com.innowise.secret_santa.model.dto.request_dto.GameRequestDto;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
+import com.innowise.secret_santa.model.dto.request_dto.PlayerRequestDto;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import com.innowise.secret_santa.model.dto.response_dto.GameResponseDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
+import com.innowise.secret_santa.model.dto.response_dto.PlayerResponseDto;
 import com.innowise.secret_santa.model.dto.response_dto.ProfileOrganizer;
 import com.innowise.secret_santa.model.postgres.Account;
-import com.innowise.secret_santa.model.postgres.Account_;
 import com.innowise.secret_santa.model.postgres.Address;
 import com.innowise.secret_santa.model.postgres.Distribution;
 import com.innowise.secret_santa.model.postgres.Game;
-import com.innowise.secret_santa.model.postgres.Game_;
 import com.innowise.secret_santa.model.postgres.Player;
-import com.innowise.secret_santa.model.postgres.Player_;
 import com.innowise.secret_santa.model.postgres.Profile;
-import com.innowise.secret_santa.model.postgres.Profile_;
 import com.innowise.secret_santa.model.postgres.Role;
+import com.innowise.secret_santa.util.CalendarUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public final class TestConstants {
 
@@ -44,14 +43,14 @@ public final class TestConstants {
     }
 
     public static final String EMAIL = "mail@gmail.com";
+    public static final String ENCODE_PASSWORD="encode_password";
     public static final String PASSWORD = "password";
     public static final String OLD_PASSWORD = "old_password";
     public static final Long ID = 1L;
     public static final RoleEnum ROLE_ENUM_USER = RoleEnum.ROLE_USER;
     public static final RoleEnum ROLE_ENUM_ORGANIZER = RoleEnum.ROLE_ORGANIZER;
-
-    public static final String ENCODE_PASSWORD = "encode_password";
-    public static final LocalDateTime DATE = LocalDateTime.now();
+    public static final RoleEnum ROLE_ENUM_PLAYER = RoleEnum.ROLE_PLAYER;
+    public static final LocalDateTime DATE = CalendarUtils.getFormatDate(LocalDateTime.now());
     public static final String COUNTRY = "country";
     public static final String STREET = "street";
     public static final String CITY = "city";
@@ -66,30 +65,29 @@ public final class TestConstants {
     public static final String LOGGER_MESSAGE_CHANGE_PASSWORD_ACCOUNT = "Account {} changed password";
     public static final String LOGGER_MESSAGE_CHANGE_ROLE_ACCOUNT = "Account by id {0} set role - {1}";
     public static final String LOGGER_MESSAGE_ABOUT_DISTRIBUTION = "Distribution for game: {0} finished";
+    public static final String LOGGER_MESSAGE_ABOUT_CHANGE_STATUS_GAME = "Game with name: {}, update status successful";
     public static final String LOGGER_MESSAGE_CREATED_PROFILE = "Account by id: {}, created profile";
     public static final String LOGGER_MESSAGE_DELETE_PROFILE = "Profile delete for account by id: ";
+    public static final String LOGGER_MESSAGE_CREATED_PLAYER = "Account by id: {}, created player";
+    public static final String LOGGER_MESSAGE_DELETE_PLAYER = "Account by id: {0} deleted from game: {1}";
     public static final SettingRolesEnum SETTING_ROLES_ENUM_ADD = SettingRolesEnum.ADD;
     public static final SettingRolesEnum SETTING_ROLES_ENUM_DELETE = SettingRolesEnum.DELETE;
     public static final String NAME_GAME = "name_game";
-
-    public static final Specification<Game> GAME_SPECIFICATION =
-            ((root, query, criteriaBuilder) -> Optional.of(ID)
-                    .map(id -> criteriaBuilder.equal(root
-                            .join(Game_.PLAYERS)
-                            .join(Player_.PROFILE)
-                            .get(Profile_.ACCOUNT)
-                            .get(Account_.ID), id))
-                    .orElseGet(criteriaBuilder::conjunction));
 
     public static final RoleDto ROLE_DTO =
             RoleDto.builder()
                     .roleName(ROLE_ENUM_USER)
                     .build();
 
-    public static final Role ROLE =
+    public static final Role ROLE_USER =
             Role.builder()
                     .id(ID)
                     .roleName(ROLE_ENUM_USER)
+                    .build();
+    public static final Role ROLE_PLAYER =
+            Role.builder()
+                    .id(ID)
+                    .roleName(ROLE_ENUM_PLAYER)
                     .build();
 
     public static final Address ADDRESS =
@@ -142,7 +140,7 @@ public final class TestConstants {
                     .id(ID)
                     .email(EMAIL)
                     .password(PASSWORD)
-                    .role(List.of(ROLE))
+                    .role(List.of(ROLE_USER, ROLE_PLAYER))
                     .dateCreated(DATE)
                     .profile(PROFILE_WITHOUT_ACCOUNT)
                     .build();
@@ -152,16 +150,10 @@ public final class TestConstants {
                     .id(ID)
                     .email(EMAIL)
                     .password(PASSWORD)
-                    .role(List.of(ROLE))
+                    .role(List.of(ROLE_USER))
                     .dateCreated(DATE)
                     .build();
-    public static final Profile PROFILE_WITH_ACCOUNT =
-            Profile.builder()
-                    .id(ID)
-                    .address(ADDRESS)
-                    .name(NAME)
-                    .account(ACCOUNT_WITHOUT_PROFILE)
-                    .build();
+
     public static final AccountDto ACCOUNT_DTO =
             AccountDto.builder()
                     .email(EMAIL)
@@ -186,6 +178,13 @@ public final class TestConstants {
                     .unnecessaryThings(UNNECESSARY_THINGS)
                     .build();
 
+
+    public static final PlayerRequestDto PLAYER_REQUEST_DTO =
+            PlayerRequestDto.builder()
+                    .necessaryThings(NECESSARY_THINGS)
+                    .unnecessaryThings(UNNECESSARY_THINGS)
+                    .build();
+
     public static final GameRequestDto GAME_REQUEST_DTO =
             GameRequestDto.builder()
                     .description(DESCRIPTION)
@@ -195,12 +194,14 @@ public final class TestConstants {
                     .timeStart(DATE)
                     .build();
 
+    public static final List<Player> PLAYERS = new ArrayList<>(List.of(PLAYER));
+
     public static final Game GAME_WITH_PLAYERS =
             Game.builder()
                     .id(ID)
                     .nameGame(NAME_GAME)
                     .timeCreated(DATE)
-                    .players(List.of(PLAYER))
+                    .players(PLAYERS)
                     .statusGame(STATUS_GAME_START)
                     .typeGame(TYPE_GAME_OPEN)
                     .description(DESCRIPTION)
@@ -221,6 +222,17 @@ public final class TestConstants {
                     .password(PASSWORD)
                     .build();
 
+    public static final Player PLAYER_WITH_GAME =
+            Player.builder()
+                    .id(ID)
+                    .profile(PROFILE_WITHOUT_ACCOUNT)
+                    .timeRegistration(DATE)
+                    .necessaryThings(NECESSARY_THINGS)
+                    .unnecessaryThings(UNNECESSARY_THINGS)
+                    .game(GAME_WITH_PLAYERS)
+                    .build();
+
+    public static final List<Player> PLAYERS_WITH_GAME = new ArrayList<>(List.of(PLAYER_WITH_GAME));
     public static final ProfileOrganizer PROFILE_ORGANIZER =
             ProfileOrganizer.builder()
                     .name(NAME)
@@ -235,7 +247,7 @@ public final class TestConstants {
                     .timeCreated(DATE)
                     .organizer(PROFILE_ORGANIZER)
                     .build();
-    //    public static final List<Game> GAMES = List.of(GAME);
+    public static final List<Game> GAMES = List.of(GAME_WITHOUT_PLAYERS);
     public static final Distribution DISTRIBUTION =
             Distribution.builder()
                     .id(ID)
@@ -252,11 +264,27 @@ public final class TestConstants {
                     .sort(SORT)
                     .build();
     public static final List<AccountDto> ACCOUNTS_DTO = List.of(ACCOUNT_DTO);
+    public static final List<AddressDto> ADDRESSES_DTO = List.of(ADDRESS_DTO);
+    public static final List<GameResponseDto> GAMES_RESPONSE_DTO = List.of(GAME_RESPONSE_DTO);
     public static final Long TOTAL = 1L;
     public static final PageRequest PAGEABLE =
             PageRequest.of(NUMBER_PAGE, SIZE, Sort.by(SORT));
     public static final Page<Account> PAGE_ACCOUNT =
             new PageImpl<>(List.of(ACCOUNT_WITH_PROFILE), PAGEABLE, TOTAL);
+    public static final Page<Player> PAGE_PLAYER =
+            new PageImpl<>(List.of(PLAYER), PAGEABLE, TOTAL);
+    public static final Page<Game> PAGE_GAME =
+            new PageImpl<>(List.of(GAME_WITHOUT_PLAYERS), PAGEABLE, TOTAL);
+    public static final Page<Address> PAGE_ADDRESS =
+            new PageImpl<>(List.of(ADDRESS), PAGEABLE, TOTAL);
+    public static final Profile PROFILE_WITH_ACCOUNT =
+            Profile.builder()
+                    .id(ID)
+                    .address(ADDRESS)
+                    .name(NAME)
+                    .account(ACCOUNT_WITHOUT_PROFILE)
+                    .players(PLAYERS)
+                    .build();
     public static final Page<Profile> PAGE_PROFILE =
             new PageImpl<>(List.of(PROFILE_WITH_ACCOUNT), PAGEABLE, TOTAL);
 
@@ -267,6 +295,14 @@ public final class TestConstants {
                     .sort(SORT)
                     .dto(List.of(ACCOUNT_DTO))
                     .build();
+
+    public static final PagesDtoResponse<Object> PAGES_DTO_RESPONSE_ADDRESS_DTO =
+            PagesDtoResponse.builder()
+                    .page(NUMBER_PAGE)
+                    .size(SIZE)
+                    .sort(SORT)
+                    .dto(List.of(ADDRESS_DTO))
+                    .build();
     public static final PagesDtoResponse<Object> PAGES_DTO_RESPONSE_PROFILE_DTO =
             PagesDtoResponse.builder()
                     .page(NUMBER_PAGE)
@@ -274,6 +310,56 @@ public final class TestConstants {
                     .sort(SORT)
                     .dto(List.of(PROFILE_DTO))
                     .build();
+    public static final PagesDtoResponse<Object> PAGES_DTO_RESPONSE_GAMES_RESPONSE_DTO =
+            PagesDtoResponse.builder()
+                    .page(NUMBER_PAGE)
+                    .size(SIZE)
+                    .sort(SORT)
+                    .dto(List.of(GAME_RESPONSE_DTO))
+                    .build();
+    public static final GameRegistration GAME_REGISTRATION =
+            GameRegistration.builder()
+                    .nameGame(NAME_GAME)
+                    .password(PASSWORD)
+                    .build();
+    public static final PlayerResponseDto PLAYER_RESPONSE_DTO =
+            PlayerResponseDto.builder()
+                    .necessaryThings(NECESSARY_THINGS)
+                    .unnecessaryThings(UNNECESSARY_THINGS)
+                    .timeRegistration(DATE)
+                    .profile(PROFILE_DTO)
+                    .game(GAME_RESPONSE_DTO)
+                    .build();
+    public static final List<PlayerResponseDto> PLAYERS_RESPONSE_DTO =
+            new ArrayList<>(List.of(PLAYER_RESPONSE_DTO));
 
+    public static final PagesDtoResponse<Object> PAGES_DTO_RESPONSE_PLAYER_DTO =
+            PagesDtoResponse.builder()
+                    .page(NUMBER_PAGE)
+                    .size(SIZE)
+                    .sort(SORT)
+                    .dto(List.of(PLAYER_RESPONSE_DTO))
+                    .build();
+    public static final Profile PROFILE_ORGANIZER_FOR_GAME =
+            Profile.builder()
+                    .id(ID)
+                    .address(ADDRESS)
+                    .name(NAME)
+                    .account(ACCOUNT_WITHOUT_PROFILE)
+                    .build();
 
+    public static final Game GAME_WITH_ORGANIZER =
+            Game.builder()
+                    .id(ID)
+                    .nameGame(NAME_GAME)
+                    .timeCreated(DATE)
+                    .organizer(PROFILE_ORGANIZER_FOR_GAME)
+                    .players(PLAYERS)
+                    .statusGame(STATUS_GAME_START)
+                    .typeGame(TYPE_GAME_OPEN)
+                    .description(DESCRIPTION)
+                    .timeEnd(DATE)
+                    .timeStart(DATE)
+                    .password(PASSWORD)
+                    .build();
 }

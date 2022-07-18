@@ -74,9 +74,9 @@ public class GameServiceImpl implements GameService,
                 .orElseThrow(() -> new MapperException("Error while created game, please to retry"));
     }
 
-    private void checkInUniqueNameGame(String nameGame){
-        if (gameRepository.existsByNameGame(nameGame)){
-            throw new IncorrectDataException("Game with name: " + nameGame+ " already exists");
+    private void checkInUniqueNameGame(String nameGame) {
+        if (gameRepository.existsByNameGame(nameGame)) {
+            throw new IncorrectDataException("Game with name: " + nameGame + " already exists");
         }
     }
 
@@ -222,7 +222,7 @@ public class GameServiceImpl implements GameService,
     public List<Game> getAllGamesAfterCurrentDate() {
 
         return Optional.ofNullable(gameRepository
-                        .findAllByStatusGameAndTimeEndBefore(StatusGame.START, LocalDateTime.now()))
+                        .findAllByStatusGameAndTimeEndBefore(StatusGame.START, CalendarUtils.getFormatDate(LocalDateTime.now())))
                 .orElseThrow(() -> new NoDataFoundException("No games with suitable parameters"));
     }
 

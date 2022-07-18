@@ -16,14 +16,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import static com.innowise.secret_santa.constants.TestConstants.DATE;
+import static com.innowise.secret_santa.constants.TestConstants.GAMES;
+import static com.innowise.secret_santa.constants.TestConstants.GAMES_RESPONSE_DTO;
 import static com.innowise.secret_santa.constants.TestConstants.GAME_REQUEST_DTO;
 import static com.innowise.secret_santa.constants.TestConstants.GAME_RESPONSE_DTO;
 import static com.innowise.secret_santa.constants.TestConstants.GAME_WITHOUT_PLAYERS;
 import static com.innowise.secret_santa.constants.TestConstants.ID;
+import static com.innowise.secret_santa.constants.TestConstants.LOGGER_MESSAGE_ABOUT_CHANGE_STATUS_GAME;
 import static com.innowise.secret_santa.constants.TestConstants.NAME_GAME;
+import static com.innowise.secret_santa.constants.TestConstants.PAGEABLE;
+import static com.innowise.secret_santa.constants.TestConstants.PAGES_DTO;
+import static com.innowise.secret_santa.constants.TestConstants.PAGES_DTO_RESPONSE_GAMES_RESPONSE_DTO;
+import static com.innowise.secret_santa.constants.TestConstants.PAGE_GAME;
 import static com.innowise.secret_santa.constants.TestConstants.PROFILE_WITH_ACCOUNT;
 import static com.innowise.secret_santa.constants.TestConstants.ROLE_ENUM_ORGANIZER;
 import static com.innowise.secret_santa.constants.TestConstants.SETTING_ROLES_ENUM_DELETE;
+import static com.innowise.secret_santa.constants.TestConstants.STATUS_GAME_START;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -110,5 +119,41 @@ class GameServiceImplTest {
         assertEquals(GAME_WITHOUT_PLAYERS, gameService.getGameByName(NAME_GAME));
 
         then(gameRepository).should(times(1)).findGameByNameGame(NAME_GAME);
+    }
+
+    @Test
+    void should_Get_PagesDtoResponse_With_All_Games() {
+        given(pageService.getPage(PAGES_DTO)).willReturn(PAGEABLE);
+        given(gameRepository.findAll(PAGEABLE)).willReturn(PAGE_GAME);
+        given(gameMapper.toGameResponseDto(GAME_WITHOUT_PLAYERS)).willReturn(GAME_RESPONSE_DTO);
+        given(pageService.getPagesDtoResponse(PAGES_DTO, GAMES_RESPONSE_DTO)).willReturn(PAGES_DTO_RESPONSE_GAMES_RESPONSE_DTO);
+
+        assertEquals(PAGES_DTO_RESPONSE_GAMES_RESPONSE_DTO, gameService.getAllGames(PAGES_DTO));
+
+        then(pageService).should(times(1)).getPage(PAGES_DTO);
+        then(gameRepository).should(times(1)).findAll(PAGEABLE);
+        then(gameMapper).should(times(1)).toGameResponseDto(GAME_WITHOUT_PLAYERS);
+        then(pageService).should(times(1)).getPagesDtoResponse(PAGES_DTO, GAMES_RESPONSE_DTO);
+
+    }
+
+    @Test
+    void should_Get_All_Games_After_Date() {
+        given(gameRepository.findAllByStatusGameAndTimeEndBefore(STATUS_GAME_START,
+                DATE))
+                .willReturn(GAMES);
+
+        assertEquals(GAMES, gameService.getAllGamesAfterCurrentDate());
+    }
+
+    @Test
+    void should_Change_Status_Game_In_Finish(){
+        given(gameRepository.save(GAME_WITHOUT_PLAYERS)).willReturn(GAME_WITHOUT_PLAYERS);
+        doNothing().when(logger).loggerInfo(LOGGER_MESSAGE_ABOUT_CHANGE_STATUS_GAME, NAME_GAME);
+
+        gameService.changeStatusGameInFinish(GAME_WITHOUT_PLAYERS);
+
+        then(gameRepository).should(times(1)).save(GAME_WITHOUT_PLAYERS);
+        verify(logger, times(1)).loggerInfo(LOGGER_MESSAGE_ABOUT_CHANGE_STATUS_GAME, NAME_GAME);
     }
 }

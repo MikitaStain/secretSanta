@@ -72,7 +72,7 @@ public class PlayerServiceImpl implements PlayerService {
                 .map(player -> checkAndAddSetPlayerRole(player, idAccount))
                 .map(this::setDateCreated)
                 .map(playerRepository::save)
-                .ifPresent(player -> loggerService.logger("Account by id: {}, created player"
+                .ifPresent(player -> loggerService.loggerInfo("Account by id: {}, created player"
                         , idAccount));
     }
 
