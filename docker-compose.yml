@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "7403663"
     volumes:
-      - secret_santa_volume
+      - ./api/app:/secret_santa_volume_postgres
     ports:
       - "5432:5432"
 
@@ -33,6 +33,10 @@ services:
         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
 
   mongodb_container:
-    image: mongo:5.0.5
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_DATABASE: secret_santa
+    volumes:
+      - ./api/app:/secret_santa_volume_mongo
     ports:
-      - 27017:27017
+      - "27017:27017"
