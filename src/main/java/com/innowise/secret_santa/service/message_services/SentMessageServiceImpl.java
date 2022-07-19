@@ -17,12 +17,12 @@ public class SentMessageServiceImpl implements SentMessagesService {
 
     private final SentMessageMapper sentMessageMapper;
     private final MongoTemplate mongoTemplate;
-    private final LoggerService<?> logger;
+    private final LoggerService<Long> logger;
     private static final String NAME_COLLECTION = "sent_messages";
 
     public SentMessageServiceImpl(SentMessageMapper sentMessageMapper,
                                   MongoTemplate mongoTemplate,
-                                  LoggerService<?> logger) {
+                                  LoggerService<Long> logger) {
         this.sentMessageMapper = sentMessageMapper;
         this.mongoTemplate = mongoTemplate;
         this.logger = logger;

@@ -15,11 +15,15 @@ import com.innowise.secret_santa.model.dto.request_dto.GameRequestDto;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.request_dto.PlayerRequestDto;
 import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
+import com.innowise.secret_santa.model.dto.request_dto.SentMessageDto;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
+import com.innowise.secret_santa.model.dto.response_dto.DistributionResponseDto;
 import com.innowise.secret_santa.model.dto.response_dto.GameResponseDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.model.dto.response_dto.PlayerResponseDto;
 import com.innowise.secret_santa.model.dto.response_dto.ProfileOrganizer;
+import com.innowise.secret_santa.model.mongo.SentMessage;
+import com.innowise.secret_santa.model.mongo.SystemMessage;
 import com.innowise.secret_santa.model.postgres.Account;
 import com.innowise.secret_santa.model.postgres.Address;
 import com.innowise.secret_santa.model.postgres.Distribution;
@@ -32,6 +36,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.mail.SimpleMailMessage;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,7 +50,7 @@ public final class TestConstants {
     }
 
     public static final String EMAIL = "mail@gmail.com";
-    public static final String ENCODE_PASSWORD="encode_password";
+    public static final String ENCODE_PASSWORD = "encode_password";
     public static final String PASSWORD = "password";
     public static final String OLD_PASSWORD = "old_password";
     public static final Long ID = 1L;
@@ -58,8 +65,10 @@ public final class TestConstants {
     public static final String NUMBER_APARTMENT = "1";
     public static final String NAME = "name";
     public static final TypeMessage TYPE_MESSAGE_CREATE = TypeMessage.CREATE;
+    public static final TypeMessage TYPE_MESSAGE_DISTRIBUTION = TypeMessage.DISTRIBUTION;
     public static final TypeMessage TYPE_MESSAGE_DELETE = TypeMessage.DELETE;
     public static final TypeMessage TYPE_MESSAGE_CHANGE = TypeMessage.CHANGE_PASSWORD;
+    public static final String LOGGER_MESSAGE_SENT_MESSAGE = "Save sent message for account with id: {}";
     public static final String LOGGER_MESSAGE_CREATE_ACCOUNT = "Account by email {} successful registration";
     public static final String LOGGER_MESSAGE_DELETE_ACCOUNT = "Account by id {} delete";
     public static final String LOGGER_MESSAGE_CHANGE_PASSWORD_ACCOUNT = "Account {} changed password";
@@ -69,7 +78,12 @@ public final class TestConstants {
     public static final String LOGGER_MESSAGE_CREATED_PROFILE = "Account by id: {}, created profile";
     public static final String LOGGER_MESSAGE_DELETE_PROFILE = "Profile delete for account by id: ";
     public static final String LOGGER_MESSAGE_CREATED_PLAYER = "Account by id: {}, created player";
+    public static final String LOGGER_MESSAGE_GET_ALL_DISTRIBUTIONS_FOR_ORGANIZER = "Account by id: {0}, get all distributions for game: {1}";
     public static final String LOGGER_MESSAGE_DELETE_PLAYER = "Account by id: {0} deleted from game: {1}";
+    public static final String LOGGER_MESSAGE_INFO_DISTRIBUTIONS = "Player: {0} have to present player: {1} from game: {2}";
+    public static final String LOGGER_MESSAGE_ACCOUNT_EMAIL = "Account by email {}, get email about your player";
+    public static final String LOGGER_MESSAGE_LOOK_DISTRIBUTION = "Account by id: {} look your distributions";
+    public static final String LOGGER_MESSAGE_LOOK_ACCOUNT_DISTRIBUTION = "Account by id: {0} look your distributions for game: {1}";
     public static final SettingRolesEnum SETTING_ROLES_ENUM_ADD = SettingRolesEnum.ADD;
     public static final SettingRolesEnum SETTING_ROLES_ENUM_DELETE = SettingRolesEnum.DELETE;
     public static final String NAME_GAME = "name_game";
@@ -362,4 +376,88 @@ public final class TestConstants {
                     .timeStart(DATE)
                     .password(PASSWORD)
                     .build();
+
+    public static final Player PLAYER_WITH_ACCOUNT =
+            Player.builder()
+                    .id(ID)
+                    .profile(PROFILE_WITH_ACCOUNT)
+                    .necessaryThings(NECESSARY_THINGS)
+                    .unnecessaryThings(UNNECESSARY_THINGS)
+                    .build();
+
+    public static final Game GAMES_WITH_ACCOUNTS =
+            Game.builder()
+                    .id(ID)
+                    .nameGame(NAME_GAME)
+                    .timeCreated(DATE)
+                    .statusGame(STATUS_GAME_START)
+                    .typeGame(TYPE_GAME_OPEN)
+                    .description(DESCRIPTION)
+                    .timeEnd(DATE)
+                    .timeStart(DATE)
+                    .organizer(PROFILE_WITH_ACCOUNT)
+                    .players(List.of(PLAYER_WITH_ACCOUNT))
+                    .build();
+    public static final DistributionResponseDto DISTRIBUTION_RESPONSE_DTO =
+            DistributionResponseDto.builder()
+                    .game(GAME_RESPONSE_DTO)
+                    .senderPlayer(PLAYER_RESPONSE_DTO)
+                    .targetPlayer(PLAYER_RESPONSE_DTO)
+                    .timeCreated(DATE)
+                    .build();
+    public static final Distribution DISTRIBUTION_WITH_ACCOUNT =
+            Distribution.builder()
+                    .id(ID)
+                    .timeCreated(DATE)
+                    .game(GAMES_WITH_ACCOUNTS)
+                    .targetPlayer(PLAYER_WITH_ACCOUNT)
+                    .senderPlayer(PLAYER_WITH_ACCOUNT)
+                    .build();
+    public static final Page<Distribution> PAGE_DISTRIBUTION =
+            new PageImpl<>(List.of(DISTRIBUTION_WITH_ACCOUNT), PAGEABLE, TOTAL);
+    public static final PagesDtoResponse<Object> PAGES_DTO_RESPONSE_DISTRIBUTION_DTO =
+            PagesDtoResponse.builder()
+                    .page(NUMBER_PAGE)
+                    .size(SIZE)
+                    .sort(SORT)
+                    .dto(List.of(DISTRIBUTION_RESPONSE_DTO))
+                    .build();
+    public static final String TEXT_MESSAGE = "text_message";
+    public static final String STRING_ID = "string_id";
+    public static final String TIME_MESSAGE = "time_message";
+    public static final String NAME_COLLECTION = "sent_messages";
+    public static final String NAME_COLLECTION_SYSTEM_MESSAGES = "system_messages";
+    public static final SentMessage SENT_MESSAGE =
+            SentMessage.builder()
+                    .textMessage(TEXT_MESSAGE)
+                    .id(STRING_ID)
+                    .timeMessage(TIME_MESSAGE)
+                    .account(ID)
+                    .build();
+    public static final SentMessageDto SENT_MESSAGE_DTO =
+            SentMessageDto.builder()
+                    .textMessage(TEXT_MESSAGE)
+                    .account(ID)
+                    .build();
+
+    public static final Class<SystemMessage> SYSTEM_MESSAGE_CLASS = SystemMessage.class;
+    public static final String KEY = "typeMessage";
+
+    public static final Query QUERY =
+             new Query((Criteria.where(KEY).is(TYPE_MESSAGE_CREATE.name())));
+
+    public static final SystemMessage SYSTEM_MESSAGE =
+            SystemMessage.builder()
+                    .textMessage(TEXT_MESSAGE)
+                    .typeMessage(TYPE_MESSAGE_CREATE)
+                    .id(STRING_ID)
+                    .build();
+    public static final SimpleMailMessage MAIL_MESSAGE =
+            new SimpleMailMessage();
+    static {
+        MAIL_MESSAGE.setTo(EMAIL);
+        MAIL_MESSAGE.setSubject(EMAIL);
+        MAIL_MESSAGE.setText(TEXT_MESSAGE);
+    }
+
 }
