@@ -7,7 +7,6 @@ import com.innowise.secret_santa.model.dto.response_dto.GameResponseDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.service.game_service.GameService;
 import com.innowise.secret_santa.util.HandleAuthorities;
-import com.innowise.secret_santa.util.ValidationParameter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;

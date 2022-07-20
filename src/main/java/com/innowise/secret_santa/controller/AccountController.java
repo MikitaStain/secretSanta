@@ -1,13 +1,13 @@
 package com.innowise.secret_santa.controller;
 
 import com.innowise.secret_santa.constants_message.Constants;
+import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.model.dto.AccountDto;
 import com.innowise.secret_santa.model.dto.request_dto.AccountChangePassword;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.service.account_services.AccountService;
 import com.innowise.secret_santa.util.HandleAuthorities;
-import com.innowise.secret_santa.util.ValidationParameter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,15 +75,16 @@ public class AccountController {
     @ApiOperation("Change account's password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AccountDto> changePassword(@RequestBody @Valid AccountChangePassword accountChangePassword) {
-
-        ValidationParameter.checkPassword(
-                accountChangePassword.getNewPassword(),
-                accountChangePassword.getNewPassword2());
-
+        checkNewPasswords(accountChangePassword.getNewPassword(), accountChangePassword.getNewPassword2());
         AccountDto account = accountService.changePasswordAccount(HandleAuthorities.getIdAuthenticationAccount(),
                 accountChangePassword);
 
         return new ResponseEntity<>(account, HttpStatus.OK);
+    }
+    private void checkNewPasswords(String password1, String password2) {
+        if (!password1.equals(password2)) {
+            throw new IncorrectDataException("Passwords do not match");
+        }
     }
 
     @GetMapping("/all")
