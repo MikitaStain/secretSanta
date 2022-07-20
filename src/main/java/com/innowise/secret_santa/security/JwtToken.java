@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.Date;
 
+import static com.innowise.secret_santa.constants_message.Constants.HEADER_AUTHORIZATION;
+
 @Component
 public class JwtToken {
 
@@ -59,7 +61,7 @@ public class JwtToken {
 
     public String resolveToken(HttpServletRequest request) {
 
-        return request.getHeader("Authorization");
+        return request.getHeader(HEADER_AUTHORIZATION);
     }
 
     public boolean validToken(String token) {

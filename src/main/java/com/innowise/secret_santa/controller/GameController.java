@@ -1,18 +1,19 @@
 package com.innowise.secret_santa.controller;
 
+import com.innowise.secret_santa.constants_message.Constants;
 import com.innowise.secret_santa.model.dto.request_dto.GameRequestDto;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.response_dto.GameResponseDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
 import com.innowise.secret_santa.service.game_service.GameService;
 import com.innowise.secret_santa.util.HandleAuthorities;
-import com.innowise.secret_santa.util.ValidationParameter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,11 +24,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/accounts/profiles/games")
 @Api("Controller about game")
+@Validated
 public class GameController {
 
     private final GameService gameService;
@@ -40,11 +45,7 @@ public class GameController {
     @PostMapping
     @ApiOperation("Create new game")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<GameResponseDto> createGame(@RequestBody GameRequestDto game) {
-
-        ValidationParameter.checkParameterIsEmpty(game.getNameGame());
-        ValidationParameter.checkDateBefore(game.getTimeEnd());
-
+    public ResponseEntity<GameResponseDto> createGame(@RequestBody @Valid GameRequestDto game) {
         GameResponseDto newGame = gameService.createGame(game, HandleAuthorities.getIdAuthenticationAccount());
 
         return new ResponseEntity<>(newGame, HttpStatus.CREATED);
@@ -54,10 +55,9 @@ public class GameController {
     @ApiOperation("Delete game for current account")
     @PreAuthorize("hasPermission('ROLE_ADMIN', authentication.principal.authorities) or " +
             "hasPermission('ROLE_ORGANIZER', authentication.principal.authorities)")
-    public ResponseEntity<HttpStatus> deleteGame(@RequestParam String nameGame) {
-
-        ValidationParameter.checkParameterIsEmpty(nameGame);
-
+    public ResponseEntity<HttpStatus> deleteGame(@RequestParam
+                                                 @NotBlank(message = Constants.NOT_NULL_FIELD)
+                                                 String nameGame) {
         gameService.deleteGame(HandleAuthorities.getIdAuthenticationAccount(), nameGame);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -65,7 +65,9 @@ public class GameController {
     @GetMapping("/{id}")
     @ApiOperation("Get game by id")
     @PreAuthorize("hasPermission('ROLE_ADMIN', authentication.principal.authorities)")
-    public ResponseEntity<GameResponseDto> getGameByID(@PathVariable("id") Long id) {
+    public ResponseEntity<GameResponseDto> getGameByID(@PathVariable("id")
+                                                       @Positive(message = Constants.NOT_NEGATIVE_ID)
+                                                       Long id) {
         GameResponseDto gameById = gameService.getGameById(id);
         return new ResponseEntity<>(gameById, HttpStatus.OK);
     }
@@ -73,11 +75,10 @@ public class GameController {
     @PatchMapping
     @ApiOperation("Change game for current account")
     @PreAuthorize("hasPermission('ROLE_ORGANIZER', authentication.principal.authorities)")
-    public ResponseEntity<GameResponseDto> changeGame(@RequestBody GameRequestDto game,
-                                                      @RequestParam String nameGame) {
-
-        ValidationParameter.checkParameterIsEmpty(nameGame);
-
+    public ResponseEntity<GameResponseDto> changeGame(@RequestBody @Valid GameRequestDto game,
+                                                      @RequestParam
+                                                      @NotBlank(message = Constants.NOT_NULL_FIELD)
+                                                      String nameGame) {
         GameResponseDto gameResponseDto =
                 gameService.changeGame(game, HandleAuthorities.getIdAuthenticationAccount(), nameGame);
         return new ResponseEntity<>(gameResponseDto, HttpStatus.OK);
@@ -100,7 +101,6 @@ public class GameController {
             (@RequestParam(defaultValue = "5") int size,
              @RequestParam(defaultValue = "0") int page,
              @RequestParam(required = false, defaultValue = "email") String sort) {
-
         PagesDtoResponse<Object> allGames = gameService.getAllGames(PagesDto
                 .builder()
                 .sort(sort)
