@@ -1,5 +1,6 @@
 package com.innowise.secret_santa.controller;
 
+import com.innowise.secret_santa.constants_message.Constants;
 import com.innowise.secret_santa.model.dto.request_dto.GameRegistration;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.request_dto.PlayerRequestDto;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -24,11 +26,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/accounts/profiles/players")
 @Api("Controller about player")
+@Validated
 public class PlayerController {
 
     private final PlayerService playerService;
@@ -42,9 +48,7 @@ public class PlayerController {
     @ApiOperation("Create player with game")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<HttpStatus> registerInGame(@RequestBody PlayerRequestDto player,
-                                                     @RequestBody GameRegistration gameRegistration) {
-
-        ValidationParameter.checkParameterIsEmpty(gameRegistration.getNameGame());
+                                                     @RequestBody @Valid GameRegistration gameRegistration) {
 
         playerService.savePlayer(gameRegistration,
                 player,
@@ -56,8 +60,9 @@ public class PlayerController {
     @GetMapping("/{id}")
     @ApiOperation("Get player by id")
     @PreAuthorize("hasPermission('ROLE_ADMIN', authentication.principal.authorities)")
-    public ResponseEntity<PlayerResponseDto> getPlayerById(@PathVariable("id") Long id) {
-
+    public ResponseEntity<PlayerResponseDto> getPlayerById(@PathVariable("id")
+                                                           @Positive(message = Constants.NOT_NEGATIVE_ID)
+                                                           Long id) {
         PlayerResponseDto playerById = playerService.getPlayerById(id);
         return new ResponseEntity<>(playerById, HttpStatus.OK);
     }
@@ -65,10 +70,9 @@ public class PlayerController {
     @DeleteMapping
     @ApiOperation("Delete player in game by game name")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<HttpStatus> deletePlayerByGameName(@RequestParam String nameGame) {
-
-        ValidationParameter.checkParameterIsEmpty(nameGame);
-
+    public ResponseEntity<HttpStatus> deletePlayerByGameName(@RequestParam
+                                                             @NotBlank(message = Constants.NOT_NULL_FIELD)
+                                                             String nameGame) {
         playerService.deletePlayerByNameGame(nameGame, HandleAuthorities.getIdAuthenticationAccount());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -80,7 +84,6 @@ public class PlayerController {
             (@RequestParam(defaultValue = "5") int size,
              @RequestParam(defaultValue = "0") int page,
              @RequestParam(required = false, defaultValue = "email") String sort) {
-
         PagesDtoResponse<Object> allPlayers = playerService.getAllPlayers(
                 PagesDto
                         .builder()
@@ -95,10 +98,9 @@ public class PlayerController {
     @ApiOperation("Change player")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PlayerResponseDto> changePlayer(@RequestBody PlayerRequestDto player,
-                                                          @RequestParam String nameGame) {
-
-        ValidationParameter.checkParameterIsEmpty(nameGame);
-
+                                                          @RequestParam
+                                                          @NotBlank(message = Constants.NOT_NULL_FIELD)
+                                                          String nameGame) {
         PlayerResponseDto playerResponseDto =
                 playerService.changePlayer(player, HandleAuthorities.getIdAuthenticationAccount(), nameGame);
         return new ResponseEntity<>(playerResponseDto, HttpStatus.OK);
@@ -107,10 +109,9 @@ public class PlayerController {
     @GetMapping("/currentGame")
     @ApiOperation("Get all players from game")
     @PreAuthorize("hasPermission('ROLE_ORGANIZER', authentication.principal.authorities)")
-    public ResponseEntity<List<PlayerResponseDto>> getAllPlayersFromGame(@RequestParam String nameGame) {
-
-        ValidationParameter.checkParameterIsEmpty(nameGame);
-
+    public ResponseEntity<List<PlayerResponseDto>> getAllPlayersFromGame(@RequestParam
+                                                                         @NotBlank(message = Constants.NOT_NULL_FIELD)
+                                                                         String nameGame) {
         List<PlayerResponseDto> players =
                 playerService.getAllPlayersFromGame(nameGame, HandleAuthorities.getIdAuthenticationAccount());
 
@@ -121,7 +122,6 @@ public class PlayerController {
     @ApiOperation("Get current players")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PlayerResponseDto>> getAllPlayersForCurrentAccount() {
-
         List<PlayerResponseDto> currentPlayers =
                 playerService.getCurrentPlayers(HandleAuthorities.getIdAuthenticationAccount());
 

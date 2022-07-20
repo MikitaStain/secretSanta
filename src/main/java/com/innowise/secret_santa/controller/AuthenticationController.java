@@ -4,7 +4,6 @@ import com.innowise.secret_santa.model.dto.request_dto.RegistrationLoginAccount;
 import com.innowise.secret_santa.model.dto.response_dto.AccountAuthenticationResponse;
 import com.innowise.secret_santa.security.JwtToken;
 import com.innowise.secret_santa.service.account_services.AccountAuthenticationService;
-import com.innowise.secret_santa.util.ValidationParameter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
@@ -33,8 +34,8 @@ public class AuthenticationController {
     @PostMapping("/login")
     @ApiOperation("Authentication")
     @PreAuthorize("isAnonymous()")
-    public ResponseEntity<HttpStatus> authenticationAccount(@RequestBody RegistrationLoginAccount account) {
-        ValidationParameter.checkParameterIsEmpty(account.getEmail(), account.getPassword());
+    public ResponseEntity<HttpStatus> authenticationAccount(@RequestBody @Valid RegistrationLoginAccount account) {
+
         HttpHeaders responseHeader = new HttpHeaders();
         AccountAuthenticationResponse authenticationAccount = service.getAuthenticationAccount(account);
         responseHeader.set

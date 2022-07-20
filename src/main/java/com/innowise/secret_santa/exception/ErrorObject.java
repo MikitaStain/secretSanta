@@ -1,8 +1,11 @@
 package com.innowise.secret_santa.exception;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -13,5 +16,6 @@ public class ErrorObject {
 
     private String message;
 
-    private String timestamp;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", shape = JsonFormat.Shape.STRING)
+    private LocalDateTime timestamp;
 }
