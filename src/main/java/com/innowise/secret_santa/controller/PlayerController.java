@@ -46,11 +46,12 @@ public class PlayerController {
     @PostMapping
     @ApiOperation("Create player with game")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<HttpStatus> registerInGame(@RequestBody PlayerRequestDto player,
+    public ResponseEntity<HttpStatus> registerInGame(@RequestParam String necessaryThings,
+                                                     @RequestParam String unnecessaryThings,
                                                      @RequestBody @Valid GameRegistration gameRegistration) {
 
         playerService.savePlayer(gameRegistration,
-                player,
+                PlayerRequestDto.builder().unnecessaryThings(unnecessaryThings).necessaryThings(necessaryThings).build(),
                 HandleAuthorities.getIdAuthenticationAccount());
 
         return new ResponseEntity<>(HttpStatus.CREATED);

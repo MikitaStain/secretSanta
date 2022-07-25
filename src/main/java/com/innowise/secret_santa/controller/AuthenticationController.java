@@ -44,7 +44,7 @@ public class AuthenticationController {
                         token.getJWTToken
                                 (
                                         authenticationAccount.getEmail(),
-                                        authenticationAccount.getRole().iterator().next().getRoleName().getRole()
+                                        authenticationAccount.getRole()
                                 )
                 );
         return ResponseEntity.ok().headers(responseHeader).body(HttpStatus.OK);

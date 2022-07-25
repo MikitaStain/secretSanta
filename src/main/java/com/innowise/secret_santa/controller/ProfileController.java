@@ -93,7 +93,7 @@ public class ProfileController {
     public ResponseEntity<PagesDtoResponse<Object>> getAllProfiles
             (@RequestParam(defaultValue = "5") int size,
              @RequestParam(defaultValue = "0") int page,
-             @RequestParam(required = false, defaultValue = "email") String sort) {
+             @RequestParam(required = false, defaultValue = "name") String sort) {
         PagesDtoResponse<Object> allProfiles = profileService.getAllProfiles(
                 PagesDto
                         .builder()

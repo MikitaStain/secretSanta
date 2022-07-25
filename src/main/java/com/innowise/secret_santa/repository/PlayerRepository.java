@@ -8,5 +8,6 @@ import java.util.List;
 public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     List<Player> findAllByProfileAccountId(Long idAccount);
+    Player findPlayerByGameNameGameAndProfileAccountId(String nameGame, Long idAccount);
 
 }

@@ -1,6 +1,6 @@
 package com.innowise.secret_santa.service.player_services;
 
-import com.innowise.secret_santa.exception.MapperException;
+import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.exception.NoAccessException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.mapper.PlayerMapper;
@@ -65,10 +65,11 @@ public class PlayerServiceImpl implements PlayerService {
     @Override
     @Transactional
     public void savePlayer(GameRegistration gameRegistration, PlayerRequestDto playerRequestDto, Long idAccount) {
+
         Optional.ofNullable(playerRequestDto)
                 .map(playerMapper::toPlayer)
-                .map(player -> setGameInPlayer(gameRegistration, player))
                 .map(player -> setProfileInPlayer(idAccount, player))
+                .map(player -> setGameInPlayer(gameRegistration, player))
                 .map(player -> checkAndAddSetPlayerRole(player, idAccount))
                 .map(this::setDateCreated)
                 .map(playerRepository::save)
@@ -76,25 +77,29 @@ public class PlayerServiceImpl implements PlayerService {
                         , idAccount));
     }
 
-    private Player checkAndAddSetPlayerRole(Player player, Long idAccount) {
-        if (player.getProfile()
-                .getAccount()
-                .getRole()
-                .stream()
-                .anyMatch(role -> role.getRoleName().equals(RoleEnum.ROLE_PLAYER))) {
-            return player;
-        }
-        accountRoleService.addOrDeleteRoleToAccount(idAccount, RoleEnum.ROLE_PLAYER, SettingRolesEnum.ADD);
+    private Player setProfileInPlayer(Long idAccount, Player player) {
+        player.setProfile(Optional.ofNullable(idAccount)
+                .map(profileGamePlayerService::getProfileByAccountId)
+                .orElseThrow(() -> new NoDataFoundException("Profile by account id: " + idAccount + " not found")));
         return player;
     }
 
     private Player setGameInPlayer(GameRegistration gameRegistration, Player player) {
         player.setGame(Optional.ofNullable(gameRegistration.getNameGame())
                 .map(gamePlayerService::getGameByName)
+                .map(game -> checkPlayers(game, player))
                 .map(this::checkDateGame)
                 .map(game -> checkPassword(gameRegistration.getPassword(), game))
                 .orElseThrow(() -> new NoDataFoundException("Game by name: " + gameRegistration.getNameGame() + " not found")));
         return player;
+    }
+
+    private Game checkPlayers(Game game, Player player) {
+        if (game.getPlayers().stream().anyMatch(item -> item.getProfile().getId().equals(player.getProfile().getId()))) {
+            throw new IncorrectDataException("You are already in this game");
+        }
+        return game;
+
     }
 
     private Game checkDateGame(Game game) {
@@ -115,10 +120,15 @@ public class PlayerServiceImpl implements PlayerService {
         return game;
     }
 
-    private Player setProfileInPlayer(Long idAccount, Player player) {
-        player.setProfile(Optional.ofNullable(idAccount)
-                .map(profileGamePlayerService::getProfileByAccountId)
-                .orElseThrow(() -> new NoDataFoundException("Profile by account id: " + idAccount + " not found")));
+    private Player checkAndAddSetPlayerRole(Player player, Long idAccount) {
+        if (player.getProfile()
+                .getAccount()
+                .getRole()
+                .stream()
+                .anyMatch(role -> role.getRoleName().equals(RoleEnum.ROLE_PLAYER))) {
+            return player;
+        }
+        accountRoleService.addOrDeleteRoleToAccount(idAccount, RoleEnum.ROLE_PLAYER, SettingRolesEnum.ADD);
         return player;
     }
 
@@ -151,24 +161,20 @@ public class PlayerServiceImpl implements PlayerService {
         loggerService.loggerInfo("Account by id: {0} deleted from game: {1}", idAccount, nameGame);
     }
 
+    private Player checkAvailabilityPlayer(Long accountId, List<Player> playersGame) {
+        return playersGame
+                .stream()
+                .filter(player -> player.getProfile().getAccount().getId().equals(accountId))
+                .findAny()
+                .orElseThrow(() -> new NoDataFoundException("You don't participate in this game"));
+    }
+
     private void deleteRolePlayer(Long accountId) {
 
         List<Player> allByProfileAccountId = playerRepository.findAllByProfileAccountId(accountId);
         if (allByProfileAccountId.isEmpty()) {
             accountRoleService.addOrDeleteRoleToAccount(accountId, RoleEnum.ROLE_PLAYER, SettingRolesEnum.DELETE);
         }
-    }
-
-    private Player checkAvailabilityPlayer(Long accountId, List<Player> playersGame) {
-
-        List<Player> playersAccount = profileGamePlayerService.getProfileByAccountId(accountId).getPlayers();
-        if (playersAccount.isEmpty()) {
-            throw new NoDataFoundException("You don't play games");
-        }
-        playersAccount.retainAll(playersGame);
-        return Optional.of(playersAccount)
-                .flatMap(listPlayer -> listPlayer.stream().findAny())
-                .orElseThrow(() -> new NoDataFoundException("You don't participate in this game"));
     }
 
     @Override
@@ -186,24 +192,12 @@ public class PlayerServiceImpl implements PlayerService {
     @Transactional
     public PlayerResponseDto changePlayer(PlayerRequestDto playerRequestDto, Long idAccount, String nameGame) {
 
-        List<Player> players = Optional.ofNullable(playerRepository.findAllByProfileAccountId(idAccount))
-                .orElseThrow(() -> new NoDataFoundException("You don't play games"));
-
-        return Optional.of(findPlayerByNameGame(players, nameGame))
+        return Optional.ofNullable(idAccount)
+                .map(id-> playerRepository.findPlayerByGameNameGameAndProfileAccountId(nameGame, id))
                 .map(player -> changeDataPlayer(player, playerRequestDto))
                 .map(playerRepository::save)
                 .map(playerMapper::toPlayerResponseDto)
-                .orElseThrow(() -> new MapperException("Data change error"));
-    }
-
-    private Player findPlayerByNameGame(List<Player> players, String nameGame) {
-
-        for (Player player : players) {
-            if (player.getGame().getNameGame().equals(nameGame)) {
-                return player;
-            }
-        }
-        throw new NoAccessException("You don't play in game: " + nameGame);
+                .orElseThrow(() -> new NoDataFoundException("You don't play games"));
     }
 
     private Player changeDataPlayer(Player player, PlayerRequestDto playerRequestDto) {
