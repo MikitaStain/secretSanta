@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class DistributionServiceImpl implements DistributionService {
@@ -57,6 +58,7 @@ public class DistributionServiceImpl implements DistributionService {
     @Transactional
     public void createDistributions() {
         List<Game> allGamesAfterCurrentDate = gameDistributionService.getAllGamesAfterCurrentDate();
+
         for (Game game : allGamesAfterCurrentDate) {
             distributionRepository.saveAll(distribution(game));
             gameDistributionService.changeStatusGameInFinish(game);
@@ -118,18 +120,17 @@ public class DistributionServiceImpl implements DistributionService {
 
         return Optional.of(accountId)
                 .map(distributionRepository::findAllBySenderPlayerProfileAccountId)
-                .map(this::mapDistributionsToDistributionResponseDto)
-                .orElseThrow(() -> new NoDataFoundException("Don't have distributions"));
+                .map(distributions -> distributions
+                        .stream()
+                        .map(distributionMapper::toDistributionResponseDto)
+                        .collect(Collectors.toList()))
+                .map(this::checkListEmpty)
+                .orElseThrow(() -> new NoDataFoundException("Don't find distribution for current account"));
     }
 
-    private List<DistributionResponseDto> mapDistributionsToDistributionResponseDto(List<Distribution> distributions) {
-
-        if (distributions.isEmpty()) {
-            throw new NoDataFoundException("Don't find distribution for current account");
-        }
-        List<DistributionResponseDto> distributionsResponseDto = new ArrayList<>();
-        for (Distribution distribution : distributions) {
-            distributionsResponseDto.add(distributionMapper.toDistributionResponseDto(distribution));
+    private List<DistributionResponseDto> checkListEmpty(List<DistributionResponseDto> distributionsResponseDto) {
+        if (distributionsResponseDto.isEmpty()) {
+            throw new NoDataFoundException("Don't find distribution");
         }
         return distributionsResponseDto;
     }
@@ -153,13 +154,15 @@ public class DistributionServiceImpl implements DistributionService {
 
         List<DistributionResponseDto> distributionsResponseDto =
                 Optional.of(distributionRepository.findAllByGameNameGameAndGameOrganizerAccountId(gameName, idAccount))
-                        .map(this::mapDistributionsToDistributionResponseDto)
-                        .orElseThrow();
+                        .map(distributions -> distributions
+                                .stream()
+                                .map(distributionMapper::toDistributionResponseDto)
+                                .collect(Collectors.toList()))
+                        .map(this::checkListEmpty)
+                        .orElseThrow(() -> new NoDataFoundException("You aren't organizer for game: "
+                                + gameName
+                                + " or in game don't have enough players"));
 
-        if (distributionsResponseDto.isEmpty()) {
-            throw new NoDataFoundException
-                    ("You aren't organizer for game: " + gameName + " or in game don't have enough players");
-        }
         loggerService.loggerInfo("Account by id: {0}, get all distributions for game: {1}"
                 , idAccount, gameName);
         return distributionsResponseDto;

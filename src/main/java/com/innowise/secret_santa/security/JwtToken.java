@@ -1,6 +1,7 @@
 package com.innowise.secret_santa.security;
 
 import com.innowise.secret_santa.exception.NoAccessException;
+import com.innowise.secret_santa.model.dto.RoleDto;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -14,6 +15,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 
 import static com.innowise.secret_santa.constants_message.Constants.HEADER_AUTHORIZATION;
 
@@ -37,10 +39,14 @@ public class JwtToken {
         secret = Base64.getEncoder().encodeToString(secret.getBytes());
     }
 
-    public String getJWTToken(String username, String role) {
+    public String getJWTToken(String username, List<RoleDto> roles) {
 
         Claims claims = Jwts.claims().setSubject(username);
-        claims.put("role", role);
+        int count = 1;
+        for (RoleDto role : roles) {
+            claims.put("role "+count++, role.getRoleName().getRole());
+        }
+
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);

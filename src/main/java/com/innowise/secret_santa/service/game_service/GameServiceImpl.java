@@ -80,6 +80,19 @@ public class GameServiceImpl implements GameService,
         }
     }
 
+    private Game setOrganizerToGame(Game game, Long idAccount) {
+        Profile organizer = Optional.ofNullable(idAccount)
+                .map(profileGameService::getProfileByAccountId)
+                .orElseThrow(() -> new NoDataFoundException("Profile not found for current account"));
+
+        game.setOrganizer(organizer);
+
+        if(isProfileOrganizer(organizer)){
+            setOrganizerRoleForAccount(idAccount);
+        }
+        return game;
+    }
+
     private Game setTimeCreateToGame(Game game) {
         game.setTimeCreated(CalendarUtils.getFormatDate(LocalDateTime.now()));
         return game;
@@ -100,23 +113,12 @@ public class GameServiceImpl implements GameService,
     }
 
 
-    private Game setOrganizerToGame(Game game, Long idAccount) {
-        Profile organizer = Optional.ofNullable(idAccount)
-                .map(profileGameService::getProfileByAccountId)
-                .orElseThrow(() -> new NoDataFoundException("Profile not found for current account"));
-        game.setOrganizer(organizer);
-        if (!checkInOrganizerForAdd(organizer.getId())) {
-            setOrganizerRoleForAccount(idAccount);
-        }
-        return game;
-    }
-
-    private boolean checkInOrganizerForAdd(Long idProfile) {
-        return gameRepository
-                .findAll()
+    private boolean isProfileOrganizer(Profile organizer) {
+        return organizer
+                .getAccount()
+                .getRole()
                 .stream()
-                .anyMatch(game -> game.getOrganizer().getId().equals(idProfile));
-
+                .noneMatch(role -> role.getRoleName().equals(RoleEnum.ROLE_ORGANIZER));
     }
 
     private void setOrganizerRoleForAccount(Long idAccount) {

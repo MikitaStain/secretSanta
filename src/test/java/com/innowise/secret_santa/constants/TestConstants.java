@@ -183,10 +183,19 @@ public final class TestConstants {
     public static final String DESCRIPTION = "description";
     public static final String NECESSARY_THINGS = "necessary_things";
     public static final String UNNECESSARY_THINGS = "unnecessary_things";
+
+    public static final Profile PROFILE_WITH_ACCOUNT_WITHOUT_PLAYER =
+            Profile.builder()
+                    .id(ID)
+                    .address(ADDRESS)
+                    .name(NAME)
+                    .account(ACCOUNT_WITHOUT_PROFILE)
+                    .build();
+
     public static final Player PLAYER =
             Player.builder()
                     .id(ID)
-                    .profile(PROFILE_WITHOUT_ACCOUNT)
+                    .profile(PROFILE_WITH_ACCOUNT_WITHOUT_PLAYER)
                     .timeRegistration(DATE)
                     .necessaryThings(NECESSARY_THINGS)
                     .unnecessaryThings(UNNECESSARY_THINGS)
@@ -444,7 +453,7 @@ public final class TestConstants {
     public static final String KEY = "typeMessage";
 
     public static final Query QUERY =
-             new Query((Criteria.where(KEY).is(TYPE_MESSAGE_CREATE.name())));
+            new Query((Criteria.where(KEY).is(TYPE_MESSAGE_CREATE.name())));
 
     public static final SystemMessage SYSTEM_MESSAGE =
             SystemMessage.builder()
@@ -454,6 +463,7 @@ public final class TestConstants {
                     .build();
     public static final SimpleMailMessage MAIL_MESSAGE =
             new SimpleMailMessage();
+
     static {
         MAIL_MESSAGE.setTo(EMAIL);
         MAIL_MESSAGE.setSubject(EMAIL);

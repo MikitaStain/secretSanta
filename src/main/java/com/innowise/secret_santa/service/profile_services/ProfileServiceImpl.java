@@ -4,7 +4,6 @@ import com.innowise.secret_santa.exception.IncorrectDataException;
 import com.innowise.secret_santa.exception.MapperException;
 import com.innowise.secret_santa.exception.NoDataFoundException;
 import com.innowise.secret_santa.mapper.ProfileMapper;
-import com.innowise.secret_santa.model.dto.AddressDto;
 import com.innowise.secret_santa.model.dto.ProfileDto;
 import com.innowise.secret_santa.model.dto.request_dto.PagesDto;
 import com.innowise.secret_santa.model.dto.response_dto.PagesDtoResponse;
@@ -13,6 +12,7 @@ import com.innowise.secret_santa.model.postgres.Address;
 import com.innowise.secret_santa.model.postgres.Profile;
 import com.innowise.secret_santa.repository.ProfileRepository;
 import com.innowise.secret_santa.service.account_services.AccountProfileService;
+import com.innowise.secret_santa.service.address_services.AddressProfileService;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.page_services.PageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +29,7 @@ public class ProfileServiceImpl implements ProfileService, ProfileGamePlayerServ
     private final LoggerService<ProfileDto> logger;
     private final AccountProfileService accountService;
     private final PageService<ProfileDto> pageService;
+    private final AddressProfileService addressProfileService;
 
 
     @Autowired
@@ -36,12 +37,14 @@ public class ProfileServiceImpl implements ProfileService, ProfileGamePlayerServ
                               ProfileMapper profileMapper,
                               LoggerService<ProfileDto> logger,
                               AccountProfileService accountService,
-                              PageService<ProfileDto> pageService) {
+                              PageService<ProfileDto> pageService,
+                              AddressProfileService addressProfileService) {
         this.profileRepository = profileRepository;
         this.profileMapper = profileMapper;
         this.logger = logger;
         this.accountService = accountService;
         this.pageService = pageService;
+        this.addressProfileService = addressProfileService;
     }
 
     @Override
@@ -82,7 +85,7 @@ public class ProfileServiceImpl implements ProfileService, ProfileGamePlayerServ
         Profile profile = Optional.ofNullable(idAccount)
                 .map(this::getProfileByAccountId)
                 .orElseThrow(() -> new NoDataFoundException("Profile for your account not found"));
-
+        
         profileRepository.delete(profile);
         logger.loggerInfo(
                 "Profile delete for account by id: ",
@@ -104,7 +107,7 @@ public class ProfileServiceImpl implements ProfileService, ProfileGamePlayerServ
         return Optional.ofNullable(idProfile)
                 .flatMap(profileRepository::findById)
                 .map(profileMapper::toProfileDto)
-                .orElseThrow(() -> new MapperException("Profile by id: "+idProfile+" not found"));
+                .orElseThrow(() -> new MapperException("Profile by id: " + idProfile + " not found"));
 
     }
 
@@ -141,43 +144,17 @@ public class ProfileServiceImpl implements ProfileService, ProfileGamePlayerServ
         if (!name.isBlank() && !name.equals(oldProfileData.getName())) {
             oldProfileData.setName(name);
         }
-        Address address = changeAddressData(oldProfileData.getAddress(), newProfileData.getAddress());
+        Address address = addressProfileService
+                .changeAddressData(oldProfileData.getAddress(), newProfileData.getAddress());
         oldProfileData.setAddress(address);
 
         return oldProfileData;
     }
 
-    private Address changeAddressData(Address oldAddress, AddressDto newAddress) {
-
-        String country = newAddress.getCountry();
-        String city = newAddress.getCity();
-        String street = newAddress.getStreet();
-        String numberHouse = newAddress.getNumberHouse();
-        String numberApartment = newAddress.getNumberApartment();
-
-        if (!country.isBlank() && !country.equals(oldAddress.getCountry())) {
-            oldAddress.setCountry(country);
-        }
-        if (!city.isBlank() && !city.equals(oldAddress.getCity())) {
-            oldAddress.setCity(city);
-        }
-        if (!street.isBlank() && !street.equals(oldAddress.getStreet())) {
-            oldAddress.setStreet(street);
-        }
-        if (!numberHouse.isBlank() && !numberHouse.equals(oldAddress.getNumberHouse())) {
-            oldAddress.setNumberHouse(numberHouse);
-        }
-        if (!numberApartment.isBlank() && !numberApartment.equals(oldAddress.getNumberApartment())) {
-            oldAddress.setNumberApartment(numberApartment);
-        }
-        return oldAddress;
-    }
-
-
     @Override
     public Profile getProfileByAccountId(Long id) {
         return Optional.ofNullable(id)
                 .map(profileRepository::findProfileByAccountId)
-                .orElseThrow(()-> new NoDataFoundException("Current account don't have a profile"));
+                .orElseThrow(() -> new NoDataFoundException("Current account don't have a profile"));
     }
 }

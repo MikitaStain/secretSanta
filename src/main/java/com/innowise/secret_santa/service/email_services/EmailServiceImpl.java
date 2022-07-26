@@ -31,8 +31,8 @@ public class EmailServiceImpl implements EmailService {
             message.setSubject(subject);
             message.setText(text);
             sender.send(message);
-        }catch (Exception ex){
-            throw new ErrorSendEmailException("Error send Email: "+ex.getMessage());
+        } catch (Exception ex) {
+            throw new ErrorSendEmailException("Error send Email: " + ex.getMessage());
         }
     }
 }
