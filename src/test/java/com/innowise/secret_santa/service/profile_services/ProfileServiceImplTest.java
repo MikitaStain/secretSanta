@@ -4,6 +4,7 @@ import com.innowise.secret_santa.mapper.ProfileMapper;
 import com.innowise.secret_santa.model.dto.ProfileDto;
 import com.innowise.secret_santa.repository.ProfileRepository;
 import com.innowise.secret_santa.service.account_services.AccountProfileService;
+import com.innowise.secret_santa.service.address_services.AddressProfileService;
 import com.innowise.secret_santa.service.logger_services.LoggerService;
 import com.innowise.secret_santa.service.page_services.PageService;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.innowise.secret_santa.constants.TestConstants.ACCOUNT_WITHOUT_PROFILE;
+import static com.innowise.secret_santa.constants.TestConstants.ADDRESS;
+import static com.innowise.secret_santa.constants.TestConstants.ADDRESS_DTO;
 import static com.innowise.secret_santa.constants.TestConstants.ID;
 import static com.innowise.secret_santa.constants.TestConstants.LOGGER_MESSAGE_CREATED_PROFILE;
 import static com.innowise.secret_santa.constants.TestConstants.LOGGER_MESSAGE_DELETE_PROFILE;
@@ -46,6 +49,8 @@ class ProfileServiceImplTest {
     private AccountProfileService accountService;
     @Mock
     private PageService<ProfileDto> pageService;
+    @Mock
+    private AddressProfileService addressProfileService;
     @InjectMocks
     private ProfileServiceImpl profileService;
 
@@ -102,12 +107,14 @@ class ProfileServiceImplTest {
     @Test
     void should_Update_Profile_And_Save_In_DataBase() {
         given(profileRepository.findProfileByAccountId(ID)).willReturn(PROFILE_WITH_ACCOUNT);
+        given(addressProfileService.changeAddressData(ADDRESS,ADDRESS_DTO)).willReturn(ADDRESS);
         given(profileRepository.save(PROFILE_WITH_ACCOUNT)).willReturn(PROFILE_WITH_ACCOUNT);
         given(profileMapper.toProfileDto(PROFILE_WITH_ACCOUNT)).willReturn(PROFILE_DTO);
 
         assertEquals(PROFILE_DTO, profileService.updateProfile(ID, PROFILE_DTO));
 
         then(profileRepository).should(times(1)).findProfileByAccountId(ID);
+        then(addressProfileService).should(times(1)).changeAddressData(ADDRESS,ADDRESS_DTO);
         then(profileRepository).should(times(1)).save(PROFILE_WITH_ACCOUNT);
         then(profileMapper).should(times(1)).toProfileDto(PROFILE_WITH_ACCOUNT);
     }

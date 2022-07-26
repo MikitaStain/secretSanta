@@ -68,8 +68,8 @@ class PlayerServiceImplTest {
     @Test
     void should_Save_Player_In_DataBase() {
         given(playerMapper.toPlayer(PLAYER_REQUEST_DTO)).willReturn(PLAYER);
-        given(gamePlayerService.getGameByName(NAME_GAME)).willReturn(GAME_WITHOUT_PLAYERS);
         given(profileGamePlayerService.getProfileByAccountId(ID)).willReturn(PROFILE_WITH_ACCOUNT);
+        given(gamePlayerService.getGameByName(NAME_GAME)).willReturn(GAME_WITH_PLAYERS);
         doNothing().when(accountRoleService).addOrDeleteRoleToAccount(ID, ROLE_ENUM_PLAYER, SETTING_ROLES_ENUM_ADD);
         given(playerRepository.save(PLAYER)).willReturn(PLAYER);
         doNothing().when(loggerService).loggerInfo(LOGGER_MESSAGE_CREATED_PLAYER, ID);
@@ -77,8 +77,8 @@ class PlayerServiceImplTest {
         playerService.savePlayer(GAME_REGISTRATION, PLAYER_REQUEST_DTO, ID);
 
         then(playerMapper).should(times(1)).toPlayer(PLAYER_REQUEST_DTO);
-        then(gamePlayerService).should(times(1)).getGameByName(NAME_GAME);
         then(profileGamePlayerService).should(times(1)).getProfileByAccountId(ID);
+        then(gamePlayerService).should(times(1)).getGameByName(NAME_GAME);
         verify(accountRoleService, times(1)).addOrDeleteRoleToAccount(ID, ROLE_ENUM_PLAYER, SETTING_ROLES_ENUM_ADD);
         then(playerRepository).should(times(1)).save(PLAYER);
         verify(loggerService, times(1)).loggerInfo(LOGGER_MESSAGE_CREATED_PLAYER, ID);
@@ -98,7 +98,6 @@ class PlayerServiceImplTest {
     @Test
     void should_Delete_Player_By_Name_Game() {
         given(gamePlayerService.getGameByName(NAME_GAME)).willReturn(GAME_WITH_PLAYERS);
-        given(profileGamePlayerService.getProfileByAccountId(ID)).willReturn(PROFILE_WITH_ACCOUNT);
         doNothing().when(playerRepository).delete(PLAYER);
         given(playerRepository.findAllByProfileAccountId(ID)).willReturn(PLAYERS);
         doNothing().when(loggerService).loggerInfo(LOGGER_MESSAGE_DELETE_PLAYER, ID, NAME_GAME);
@@ -106,7 +105,6 @@ class PlayerServiceImplTest {
         playerService.deletePlayerByNameGame(NAME_GAME, ID);
 
         then(gamePlayerService).should(times(1)).getGameByName(NAME_GAME);
-        then(profileGamePlayerService).should(times(1)).getProfileByAccountId(ID);
         verify(playerRepository, times(1)).delete(PLAYER);
         then(playerRepository).should(times(1)).findAllByProfileAccountId(ID);
         verify(loggerService, times(1)).loggerInfo(LOGGER_MESSAGE_DELETE_PLAYER, ID, NAME_GAME);
@@ -130,13 +128,13 @@ class PlayerServiceImplTest {
 
     @Test
     void should_Change_Player() {
-        given(playerRepository.findAllByProfileAccountId(ID)).willReturn(PLAYERS_WITH_GAME);
+        given(playerRepository.findPlayerByGameNameGameAndProfileAccountId(NAME_GAME, ID)).willReturn(PLAYER_WITH_GAME);
         given(playerRepository.save(PLAYER_WITH_GAME)).willReturn(PLAYER_WITH_GAME);
         given(playerMapper.toPlayerResponseDto(PLAYER_WITH_GAME)).willReturn(PLAYER_RESPONSE_DTO);
 
         assertEquals(PLAYER_RESPONSE_DTO, playerService.changePlayer(PLAYER_REQUEST_DTO, ID, NAME_GAME));
 
-        then(playerRepository).should(times(1)).findAllByProfileAccountId(ID);
+        then(playerRepository).should(times(1)).findPlayerByGameNameGameAndProfileAccountId(NAME_GAME, ID);
         then(playerRepository).should(times(1)).save(PLAYER_WITH_GAME);
         then(playerMapper).should(times(1)).toPlayerResponseDto(PLAYER);
 
